@@ -179,6 +179,14 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 
 /* ── COACH ── */
 .player-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bdr)}
+/* ── PIN ── */
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--bdr);transition:background .15s}
+.pin-dot.on{background:var(--pri)}
+.pin-key{padding:14px 10px;font-size:20px;font-weight:700;border-radius:var(--rsm);border:1.5px solid var(--bdr);background:var(--card);color:var(--txt);cursor:pointer;transition:all .15s}
+.pin-key:active{background:var(--bg);transform:scale(.93)}
+.pin-clr{font-size:16px;color:var(--acc)}
+.pin-ok{background:var(--pri);color:#fff;border-color:var(--pri)}
+
 .player-row:last-child{border-bottom:none}
 .avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
 
@@ -321,7 +329,7 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
     <div class="ex" style="border-bottom:none">
       <div class="ex-body">
         <span class="ex-tag" style="background:var(--org-bg);color:var(--org)">Bonus</span>
-        <div class="ex-name">Circuit Force — Jeudi</div>
+        <div class="ex-name">Circuit Force — Extra-Time</div>
         <div class="ex-note">Fentes · Sauts · Corde — 40 à 50 min</div>
       </div>
       <div class="ex-loads" style="padding-top:4px">
@@ -417,7 +425,7 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
     <div class="ps-btn B" id="ps-B" onclick="setProg('B')">
       <div class="ps-icon">⚡</div>
       <div class="ps-title">Circuit Force</div>
-      <div class="ps-sub">Jeudi · A/B/C</div>
+      <div class="ps-sub">Extra-Time · A/B/C</div>
       <div class="ps-badge badge-opti">Bonus optionnel</div>
     </div>
   </div>
@@ -533,17 +541,82 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
      PAGE : COACH
 ══════════════════════════════════ -->
 <div id="pg-coach" class="page">
-  <div class="card">
-    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Vue coach — Sylvain Deblock</div>
-    <div class="metrics">
-      <div class="met"><div class="met-l">Séances validées</div><div class="met-v" id="c-tot">—</div><div class="met-s">total équipes</div></div>
-      <div class="met"><div class="met-l">Taux moyen</div><div class="met-v" id="c-pct">—</div><div class="met-s">de complétion</div></div>
+
+  <!-- ÉCRAN PIN -->
+  <div id="coach-pin-screen">
+    <div class="card" style="text-align:center;padding:28px 20px">
+      <div style="font-size:36px;margin-bottom:12px">🔒</div>
+      <div style="font-size:16px;font-weight:700;color:var(--txt);margin-bottom:6px">Vue coach</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:20px">Réservée à Sylvain Deblock<br>Entre le code PIN pour accéder</div>
+      <div id="pin-dots" style="display:flex;justify-content:center;gap:12px;margin-bottom:20px">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto">
+        <button class="pin-key" onclick="pinKey('1')">1</button>
+        <button class="pin-key" onclick="pinKey('2')">2</button>
+        <button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button>
+        <button class="pin-key" onclick="pinKey('5')">5</button>
+        <button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button>
+        <button class="pin-key" onclick="pinKey('8')">8</button>
+        <button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key pin-clr" onclick="pinClear()">&#x232B;</button>
+        <button class="pin-key" onclick="pinKey('0')">0</button>
+        <button class="pin-key pin-ok" onclick="pinValidate()">OK</button>
+      </div>
+      <div id="pin-error" style="display:none;margin-top:14px;font-size:12px;font-weight:700;color:var(--acc)">Code incorrect. Réessaie.</div>
     </div>
-    <div class="sec" style="margin-top:0">Équipe féminine N2</div>
-    <div id="c-fem"></div>
-    <div class="sec">Équipe masculine N3</div>
-    <div id="c-masc"></div>
   </div>
+
+  <!-- TABLEAU DE BORD COACH (visible après PIN) -->
+  <div id="coach-dashboard" style="display:none">
+    <div class="card" style="background:var(--pri);border:none;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#fff">Tableau de bord coach</div>
+          <div style="font-size:11px;color:#7da8c8;margin-top:1px">Sylvain Deblock — VBC Bailleul 2026/27</div>
+        </div>
+        <button onclick="coachLogout()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer">Verrouiller</button>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="met"><div class="met-l">Joueurs inscrits</div><div class="met-v" id="c-total-players">0</div><div class="met-s">profils actifs</div></div>
+      <div class="met"><div class="met-l">Séances validées</div><div class="met-v" id="c-tot">0</div><div class="met-s">toutes équipes</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Gérer les équipes
+      </div>
+      <div class="info-box" style="margin-bottom:12px">Ajoute tes joueurs manuellement. Quand un joueur remplit son profil et valide une séance, ses données apparaissent ici automatiquement.</div>
+      <span class="label">Ajouter un joueur / une joueuse</span>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="new-player-name" placeholder="Prénom Nom (ex : Marie D.)" style="margin-bottom:0;flex:1">
+        <select id="new-player-eq" style="margin-bottom:0;width:auto;flex-shrink:0">
+          <option value="f">N2F ♀</option>
+          <option value="m">N3M ♂</option>
+        </select>
+      </div>
+      <button class="btn btn-pri" onclick="addPlayer()" style="margin-bottom:14px">Ajouter</button>
+      <div class="sec" style="margin-top:0">Équipe féminine N2</div>
+      <div id="c-fem"></div>
+      <div class="sec">Équipe masculine N3</div>
+      <div id="c-masc"></div>
+      <div id="c-empty" style="display:none;padding:20px 0;text-align:center;font-size:13px;color:var(--txt2)">Aucun joueur pour l'instant.<br><span style="font-size:12px">Ajoute des joueurs ci-dessus.</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Actions</div>
+      <button class="btn" onclick="exportCoachData()" style="margin-bottom:8px">
+        &#x2B07; Exporter les données (JSON)
+      </button>
+      <button class="btn" onclick="resetCoachData()" style="color:var(--acc);border-color:var(--acc)">
+        &#x21BA; Remettre à zéro toutes les données
+      </button>
+    </div>
+  </div>
+
 </div>
 
 </div><!-- /scroll -->
@@ -668,7 +741,7 @@ const EXT_P2 = [
   {id:'e2f',cat:'Core',nom:'Gainage dynamique',reps:'3 × 40 sec',x:null,df:'',dm:'',note:'Alterner frontal · latéral · 1 jambe levée',alt:['Copenhagen plank','Star plank'],vid:'https://youtu.be/_rdfjFSFKMY'},
 ];
 
-// Circuit Force Jeudi (programme B) — extrait de tes images
+// Circuit Force Extra-Time (programme B) — extrait de tes images
 const CIRCUITS = [
   {w:1,reps:{a:30,b:6,c:6},tours:4,fin:'Gainage 45" (5 exercices)',
    groupes:[
@@ -764,10 +837,7 @@ const ZONES=[
 ];
 const THEMES=['Initiation','Construction','Hypertrophie','Force max','Explosivité','Force-vitesse','Puissance','Affûtage'];
 const FL=['','😩','😕','😐','🙂','💪'];
-const DEMO_F=['Alice B.','Chloé M.','Laura D.','Emma V.','Inès T.','Sophie R.'];
-const DEMO_M=['Thomas G.','Maxime L.','Antoine F.','Julien P.','Kevin B.','Robin S.'];
-const demoD={};
-[...DEMO_F,...DEMO_M].forEach(p=>{demoD[p]={n:Math.floor(Math.random()*7)+1,fl:FL[Math.floor(Math.random()*3)+2]};});
+// Les données des joueurs sont gérées dynamiquement dans la vue coach
 
 // ═══════════════════════════════════════════════════
 // STATE
@@ -780,6 +850,8 @@ let S={
   feelA:0,feelB:0,
   done:{},
   alts:{},
+  players:[],
+  coachUnlocked:false,
 };
 
 function loadS(){try{const d=localStorage.getItem('vbc26');if(d)S={...S,...JSON.parse(d)};}catch(e){}}
@@ -975,7 +1047,7 @@ function renProgB(){
   document.getElementById('c-badge').textContent=`${circ.tours} tours · Repos 3'`;
   document.getElementById('c-header').innerHTML=`
     <div style="background:var(--org-bg);border:1.5px solid #e8c080;border-radius:var(--r);padding:14px 16px">
-      <div style="font-size:11px;font-weight:700;color:var(--org);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Circuit Force — Jeudi</div>
+      <div style="font-size:11px;font-weight:700;color:var(--org);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Circuit Force — Extra-Time</div>
       <div style="display:flex;gap:8px">
         <div style="background:#fff;border-radius:8px;padding:6px 12px;text-align:center;flex:1"><div style="font-size:9px;font-weight:700;color:var(--txt2)">REPS A</div><div style="font-size:22px;font-weight:800;color:#1a6b42">${circ.reps.a}</div></div>
         <div style="background:#fff;border-radius:8px;padding:6px 12px;text-align:center;flex:1"><div style="font-size:9px;font-weight:700;color:var(--txt2)">REPS B</div><div style="font-size:22px;font-weight:800;color:var(--pri)">${circ.reps.b}</div></div>
@@ -1014,11 +1086,15 @@ function valider(prog){
   const w=prog==='A'?S.week:S.cweek;
   const key=`S${w}-${prog==='A'?S.stype:'circuit'}`;
   const feel=prog==='A'?S.feelA:S.feelB;
-  S.done[key]={feel,date:new Date().toLocaleDateString('fr-FR'),prog};
+  const today=new Date().toLocaleDateString('fr-FR');
+  S.done[key]={feel,date:today,prog};
+  // Mettre à jour le profil joueur dans la liste coach si trouvé
+  const selfIdx=S.players.findIndex(p=>p.id==='self'||p.name===S.nom);
+  if(selfIdx>=0){S.players[selfIdx].lastFeel=feel;S.players[selfIdx].lastDate=today;}
   saveS();renAccueil();
   const fl=FL[feel]||'';
   document.getElementById('val-'+prog).style.display='block';
-  document.getElementById('val-'+prog).innerHTML=`<div class="ok-box"><strong>Séance validée ✓</strong> le ${new Date().toLocaleDateString('fr-FR')} ${fl}<br>Ton coach peut maintenant voir ta progression.</div>`;
+  document.getElementById('val-'+prog).innerHTML=`<div class="ok-box"><strong>Séance validée ✓</strong> le ${today} ${fl}<br>Ton coach peut maintenant voir ta progression.</div>`;
   toast('Séance enregistrée ✓');
 }
 
@@ -1091,31 +1167,162 @@ function renVideos(){
 }
 
 // ═══════════════════════════════════════════════════
-// COACH
+// PIN COACH
+// ═══════════════════════════════════════════════════
+const COACH_PIN = '1234';
+let pinBuffer = '';
+
+function pinKey(d){
+  if(pinBuffer.length>=4) return;
+  pinBuffer+=d;
+  updatePinDots();
+  if(pinBuffer.length===4) setTimeout(pinValidate,200);
+}
+function pinClear(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pin-error').style.display='none';
+}
+function updatePinDots(){
+  document.querySelectorAll('.pin-dot').forEach((dot,i)=>{
+    dot.classList.toggle('on', i<pinBuffer.length);
+  });
+}
+function pinValidate(){
+  if(pinBuffer===COACH_PIN){
+    S.coachUnlocked=true;
+    document.getElementById('coach-pin-screen').style.display='none';
+    document.getElementById('coach-dashboard').style.display='block';
+    renCoachDashboard();
+  } else {
+    document.getElementById('pin-error').style.display='block';
+    pinBuffer='';
+    updatePinDots();
+    setTimeout(()=>document.getElementById('pin-error').style.display='none',2000);
+  }
+}
+function coachLogout(){
+  S.coachUnlocked=false;
+  pinBuffer='';
+  updatePinDots();
+  document.getElementById('coach-pin-screen').style.display='block';
+  document.getElementById('coach-dashboard').style.display='none';
+}
+
+// ═══════════════════════════════════════════════════
+// COACH DASHBOARD
 // ═══════════════════════════════════════════════════
 function renCoach(){
-  function team(players,col,bg){
+  if(S.coachUnlocked){
+    document.getElementById('coach-pin-screen').style.display='none';
+    document.getElementById('coach-dashboard').style.display='block';
+    renCoachDashboard();
+  } else {
+    document.getElementById('coach-pin-screen').style.display='block';
+    document.getElementById('coach-dashboard').style.display='none';
+    pinBuffer=''; updatePinDots();
+  }
+}
+
+function renCoachDashboard(){
+  // Fusionner joueurs configurés + joueurs qui ont validé des séances
+  const allPlayers = getAllPlayers();
+  const fem = allPlayers.filter(p=>p.eq==='f');
+  const masc = allPlayers.filter(p=>p.eq==='m');
+
+  document.getElementById('c-total-players').textContent=allPlayers.length;
+
+  function renderTeam(players, col, bg){
+    if(!players.length) return '';
     return players.map(p=>{
-      const s=demoD[p];const pct=Math.round(s.n/8*100);const ini=p.split(' ').map(x=>x[0]).join('');
+      const done=Object.keys(S.done).filter(k=>k.startsWith('player-'+p.id+'-')).length;
+      const feel=p.lastFeel||0;
+      const fl=['','😩','😕','😐','🙂','💪'][feel]||'';
+      const pct=Math.round(done/16*100);
+      const ini=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
       return`<div class="player-row">
-        <div class="avatar" style="width:36px;height:36px;background:${bg};color:${col}">${ini}</div>
-        <div style="flex:1">
+        <div class="avatar" style="width:38px;height:38px;font-size:12px;background:${bg};color:${col};flex-shrink:0">${ini}</div>
+        <div style="flex:1;min-width:0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:700">${p} ${s.fl}</span>
-            <span style="font-size:12px;font-weight:800;color:${col}">${pct}%</span>
+            <span style="font-size:13px;font-weight:700">${p.name} ${fl}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;font-weight:800;color:${col}">${pct}%</span>
+              <button onclick="removePlayer('${p.id}')" style="background:none;border:none;color:var(--txt2);cursor:pointer;font-size:14px;padding:0 2px" title="Supprimer">✕</button>
+            </div>
           </div>
           <div class="prog-bar"><div class="prog-fill" style="background:${col};width:${pct}%"></div></div>
-          <div style="font-size:11px;color:var(--txt2);margin-top:3px">${s.n} / 8 séances validées</div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:3px">${done} séance${done>1?'s':''} validée${done>1?'s':''} ${p.lastDate?'· Dernière : '+p.lastDate:''}</div>
         </div>
       </div>`;
     }).join('');
   }
-  document.getElementById('c-fem').innerHTML=team(DEMO_F,'#c0392b','#fef0f0');
-  document.getElementById('c-masc').innerHTML=team(DEMO_M,'#1a5fa5','#eff4fb');
-  const tot=Object.values(demoD).reduce((a,s)=>a+s.n,0);
-  const all=Object.values(demoD).length*8;
-  document.getElementById('c-tot').textContent=tot;
-  document.getElementById('c-pct').textContent=Math.round(tot/all*100)+'%';
+
+  const femHTML = renderTeam(fem,'#c0392b','#fef0f0');
+  const mascHTML = renderTeam(masc,'#1a5fa5','#eff4fb');
+
+  document.getElementById('c-fem').innerHTML = femHTML || '<div style="padding:10px 0;font-size:12px;color:var(--txt2)">Aucune joueuse N2F</div>';
+  document.getElementById('c-masc').innerHTML = mascHTML || '<div style="padding:10px 0;font-size:12px;color:var(--txt2)">Aucun joueur N3M</div>';
+
+  const totalDone = allPlayers.reduce((a,p)=>a+Object.keys(S.done).filter(k=>k.startsWith('player-'+p.id+'-')).length,0);
+  document.getElementById('c-tot').textContent=totalDone;
+  document.getElementById('c-empty').style.display=allPlayers.length===0?'block':'none';
+}
+
+function getAllPlayers(){
+  // Joueurs configurés par le coach
+  const list=[...S.players];
+  // Joueurs qui ont validé une séance depuis leur propre profil (ce device)
+  if(S.nom && S.eq){
+    const selfId='self';
+    const selfExists=list.some(p=>p.id===selfId);
+    if(!selfExists){
+      const selfDone=Object.keys(S.done).filter(k=>!k.startsWith('player-')).length;
+      if(selfDone>0){
+        list.push({id:selfId,name:S.nom,eq:S.eq,
+          lastFeel:S.feelA||S.feelB,
+          lastDate:Object.values(S.done).filter(d=>d.date).map(d=>d.date).sort().pop()});
+      }
+    }
+  }
+  return list;
+}
+
+function addPlayer(){
+  const name=document.getElementById('new-player-name').value.trim();
+  const eq=document.getElementById('new-player-eq').value;
+  if(!name){toast('Entre un prénom et un nom');return;}
+  const id='p-'+Date.now();
+  S.players.push({id,name,eq,lastFeel:0,lastDate:'',addedAt:new Date().toLocaleDateString('fr-FR')});
+  document.getElementById('new-player-name').value='';
+  saveS();
+  renCoachDashboard();
+  toast(name+' ajouté·e ✓');
+}
+
+function removePlayer(id){
+  if(!confirm('Supprimer ce joueur/cette joueuse ?')) return;
+  S.players=S.players.filter(p=>p.id!==id);
+  // Supprimer aussi ses séances
+  Object.keys(S.done).forEach(k=>{if(k.startsWith('player-'+id+'-'))delete S.done[k];});
+  saveS();
+  renCoachDashboard();
+  toast('Joueur·se supprimé·e');
+}
+
+function exportCoachData(){
+  const data={equipes:{N2F:S.players.filter(p=>p.eq==='f'),N3M:S.players.filter(p=>p.eq==='m')},seances:S.done,date:new Date().toLocaleDateString('fr-FR')};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='vbc-bailleul-coach-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  toast('Données exportées ✓');
+}
+
+function resetCoachData(){
+  if(!confirm('Remettre à zéro TOUTES les données (joueurs + séances) ? Cette action est irréversible.')) return;
+  S.players=[];S.done={};S.feelA=0;S.feelB=0;
+  saveS();
+  renCoachDashboard();
+  toast('Données remises à zéro ✓');
 }
 
 // ═══════════════════════════════════════════════════
