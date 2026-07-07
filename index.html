@@ -534,19 +534,6 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 <!-- ══════════════════════════════════
      PAGE : COACH
 ══════════════════════════════════ -->
-<div id="pg-coach" class="page">
-  <div class="card">
-    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Vue coach — Sylvain Deblock</div>
-    <div class="metrics">
-      <div class="met"><div class="met-l">Séances validées</div><div class="met-v" id="c-tot">—</div><div class="met-s">total équipes</div></div>
-      <div class="met"><div class="met-l">Taux moyen</div><div class="met-v" id="c-pct">—</div><div class="met-s">de complétion</div></div>
-    </div>
-    <div class="sec" style="margin-top:0">Équipe féminine N2</div>
-    <div id="c-fem"></div>
-    <div class="sec">Équipe masculine N3</div>
-    <div id="c-masc"></div>
-  </div>
-</div>
 
 
 <!-- PAGE STATS -->
@@ -1010,10 +997,6 @@ const ZONES=[
 ];
 const THEMES=['Initiation','Construction','Hypertrophie','Force max','Explosivité','Force-vitesse','Puissance','Affûtage'];
 const FL=['','\uD83D\uDE29','\uD83D\uDE15','\uD83D\uDE10','\uD83D\uDE42','\uD83D\uDCAA'];
-const DEMO_F=['Alice B.','Chloé M.','Laura D.','Emma V.','Inès T.','Sophie R.'];
-const DEMO_M=['Thomas G.','Maxime L.','Antoine F.','Julien P.','Kevin B.','Robin S.'];
-const demoD={};
-[...DEMO_F,...DEMO_M].forEach(p=>{demoD[p]={n:Math.floor(Math.random()*7)+1,fl:FL[Math.floor(Math.random()*3)+2]};});
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // STATE
@@ -1340,30 +1323,7 @@ function renVideos(){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // COACH
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-function renCoach(){
-  function team(players,col,bg){
-    return players.map(p=>{
-      const s=demoD[p];const pct=Math.round(s.n/8*100);const ini=p.split(' ').map(x=>x[0]).join('');
-      return`<div class="player-row">
-        <div class="avatar" style="width:36px;height:36px;background:${bg};color:${col}">${ini}</div>
-        <div style="flex:1">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:700">${p} ${s.fl}</span>
-            <span style="font-size:12px;font-weight:800;color:${col}">${pct}%</span>
-          </div>
-          <div class="prog-bar"><div class="prog-fill" style="background:${col};width:${pct}%"></div></div>
-          <div style="font-size:11px;color:var(--txt2);margin-top:3px">${s.n} / 8 séances validées</div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-  document.getElementById('c-fem').innerHTML=team(DEMO_F,'#c0392b','#fef0f0');
-  document.getElementById('c-masc').innerHTML=team(DEMO_M,'#1a5fa5','#eff4fb');
-  const tot=Object.values(demoD).reduce((a,s)=>a+s.n,0);
-  const all=Object.values(demoD).length*8;
-  document.getElementById('c-tot').textContent=tot;
-  document.getElementById('c-pct').textContent=Math.round(tot/all*100)+'%';
-}
+// (ancienne vue coach de démonstration supprimée)
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // TIMER
