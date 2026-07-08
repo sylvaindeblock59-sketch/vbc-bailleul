@@ -1,6 +1,6 @@
-// VBC Bailleul — Service Worker v3.0
+// VBC Bailleul — Service Worker v4.0
 // Network-First : toujours la dernière version du HTML
-const CACHE = 'vbc-v3';
+const CACHE = 'vbc-v4';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -9,7 +9,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
