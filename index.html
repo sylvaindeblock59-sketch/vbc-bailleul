@@ -227,6 +227,7 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 }
 @media(max-width:859px){.pc-sidebar{display:none}}
 
+.st-f.on{background:var(--pri)!important;color:#fff!important;border-color:var(--pri)!important}
 .pin-dot{width:13px;height:13px;border-radius:50%;background:var(--bdr);transition:all .15s}
 .pin-dot.on{background:var(--pri);transform:scale(1.15)}
 .pin-key{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:15px 0;font-size:20px;font-weight:800;color:var(--txt);border:1.5px solid var(--bdr);border-radius:10px;background:var(--card);cursor:pointer}
@@ -292,7 +293,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v9</div>
+    <div class="hdr-pill">Été 2026 · v10</div>
   </div>
 </div>
 
@@ -595,6 +596,11 @@ window.onerror = function(msg, url, line) {
     </div>
   </div>
   <div id="stats-dash" style="display:none">
+    <div id="st-filtres" style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-ghost st-f on" data-f="all" onclick="setStFiltre('all')" style="flex:1;padding:9px;font-size:12px;font-weight:700">Tous</button>
+      <button class="btn btn-ghost st-f" data-f="f" onclick="setStFiltre('f')" style="flex:1;padding:9px;font-size:12px;font-weight:700">&#9792; N2F</button>
+      <button class="btn btn-ghost st-f" data-f="m" onclick="setStFiltre('m')" style="flex:1;padding:9px;font-size:12px;font-weight:700">&#9794; N3M</button>
+    </div>
     <div class="metrics" id="st-kpis"></div>
     <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Participation</div>
@@ -1111,6 +1117,7 @@ function go(id){
 // PROFIL
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function saveProfil(){
+  setTimeout(loadMesSeances, 400);
   S.eq=document.getElementById('p-eq').value;
   S.nom=document.getElementById('p-nom').value;
   S.poste=document.getElementById('p-pos').value;
@@ -1550,9 +1557,30 @@ valider = function(prog) {
   }
 };
 
+function loadMesSeances() {
+  if (!S.nom) return;
+  sbGetCache('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&order=semaine.asc', function(rows, ok) {
+    if (!rows || !rows.length) return;
+    var ajout = 0;
+    rows.forEach(function(r) {
+      if (!r.semaine || !r.type_seance) return;
+      var key = 'S' + r.semaine + '-' + r.type_seance;
+      if (!S.done[key]) {
+        S.done[key] = {feel: r.feeling || 0, date: r.date_seance || '', prog: r.type_seance === 'circuit' ? 'B' : 'A'};
+        ajout++;
+      }
+    });
+    if (ajout > 0) {
+      saveS();
+      renAccueil();
+      toast('Historique synchronis\u00e9 \u2713');
+    }
+  });
+}
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 loadS();
 restoreProfil();
+loadMesSeances();
 restoreRM();
 renAccueil();
 renVideos();
@@ -1876,8 +1904,18 @@ function validerRetro() {
   });
 }
 
+var _stFiltre = 'all';
+function setStFiltre(f) {
+  _stFiltre = f;
+  var btns = document.querySelectorAll('.st-f');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].className = btns[i].getAttribute('data-f') === f ? 'btn btn-ghost st-f on' : 'btn btn-ghost st-f';
+  }
+  chargerStats();
+}
 function chargerStats() {
   sbGetCache('vbc_seances', 'order=created_at.asc&limit=500', function(seances, ok, cacheTs) {
+    if (_stFiltre !== 'all') seances = (seances || []).filter(function(s){return s.equipe === _stFiltre;});
     var kpiNote = ok ? '' : noteCache((seances && seances.length) ? cacheTs : null);
     if (!seances || !seances.length) {
       var kpis = document.getElementById('st-kpis');
