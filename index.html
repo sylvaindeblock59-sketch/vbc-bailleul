@@ -228,8 +228,15 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 @media(max-width:859px){.pc-sidebar{display:none}}
 
 .pin-dot.on{background:var(--pri);transform:scale(1.15)}
+.pin-key{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:15px 0;font-size:20px;font-weight:800;color:var(--txt);border:1.5px solid var(--bdr);border-radius:10px;background:var(--card);cursor:pointer}
+.pin-key:active{background:var(--bg);transform:scale(.96)}
+.chg-box{margin-top:8px;background:var(--bg);border:1px dashed var(--bdr);border-radius:8px;padding:8px 10px}
+.chg-prev{font-size:11px;color:var(--txt2);margin-bottom:5px}
+.chg-lbl{font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px}
+.chg-inp{width:110px;padding:9px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:16px;font-weight:700;background:var(--card)}
 /* ══ CORRECTIF SAFARI iOS : menu du bas toujours visible ══ */
 @media(max-width:859px){
+  .shell{position:fixed;inset:0;height:auto;margin:0 auto}
   .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:500;box-shadow:0 -2px 10px rgba(15,25,35,.08)}
   .scroll{padding-bottom:calc(var(--nav) + var(--safe) + 14px)}
 }
@@ -281,7 +288,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v5</div>
+    <div class="hdr-pill">Été 2026 · v7</div>
   </div>
 </div>
 
@@ -1177,6 +1184,58 @@ function getLoad(ex){
   const df=ex.df||'\u2014';const dm=ex.dm||'\u2014';
   return{f:df+(df&&df!=='\u2014'&&!noU(df)?' kg':''),m:dm+(dm&&dm!=='\u2014'&&!noU(dm)?' kg':''),calc:false};
 }
+var _chgHist = null, _chgLoading = false;
+function loadCharges(cb) {
+  if (!S.nom) { _chgHist = {}; if (cb) cb(); return; }
+  if (_chgLoading) return;
+  _chgLoading = true;
+  sbGetCache('vbc_charges', 'prenom=eq.'+encodeURIComponent(S.nom)+'&order=semaine.asc', function(rows) {
+    _chgHist = {};
+    (rows || []).forEach(function(r) {
+      if (!r.exercice) return;
+      if (!_chgHist[r.exercice]) _chgHist[r.exercice] = [];
+      _chgHist[r.exercice].push({s: r.semaine, c: r.charge});
+    });
+    _chgLoading = false;
+    if (cb) cb();
+  });
+}
+function chargePrec(id, w) {
+  S.charges = S.charges || {};
+  for (var i = w - 1; i >= 1; i--) {
+    var k = 'S' + i + '-' + id;
+    if (S.charges[k]) return S.charges[k];
+  }
+  var best = null, bestS = -1;
+  if (_chgHist && _chgHist[id]) {
+    _chgHist[id].forEach(function(r) {
+      if (r.s < w && r.s > bestS && r.c != null) { best = r.c; bestS = r.s; }
+    });
+  }
+  return best;
+}
+function setCharge(key, val) {
+  S.charges = S.charges || {};
+  if (val === '' || val == null) delete S.charges[key];
+  else S.charges[key] = val;
+  saveS();
+}
+function chargeHTML(e, w) {
+  S.charges = S.charges || {};
+  var key = 'S' + w + '-' + e.id;
+  var v = S.charges[key] != null ? S.charges[key] : '';
+  var prev = chargePrec(e.id, w);
+  return '<div class="chg-box">'
+    + '<div class="chg-prev">' + (prev != null ? ('Derni\u00e8re fois : <strong>' + prev + ' kg</strong>') : 'Premi\u00e8re saisie \u2014 note ta charge !') + '</div>'
+    + '<label class="chg-lbl">Ma charge (kg)</label>'
+    + '<input type="number" inputmode="decimal" step="0.5" min="0" class="chg-inp" value="' + v + '" onchange="setCharge(\'' + key + '\', this.value)" placeholder="' + (prev != null ? prev : 'kg') + '">'
+    + '</div>';
+}
+function exoNom(id) {
+  var all = [].concat(SALLE_P1, SALLE_P2, EXT_P1, EXT_P2);
+  for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i].nom;
+  return id;
+}
 function loadHTML(ex){
   const L=getLoad(ex);
   if(!ex.df&&!ex.dm) return '';
@@ -1219,6 +1278,7 @@ function renSeance(){
 }
 
 function renProgA(){
+  if(_chgHist===null&&S.nom){loadCharges(function(){if(S.prog==='A')renProgA();});}
   const w=S.week;const ph=w<=4?1:2;
   const phC=ph===1?'var(--grn)':'var(--pur)';
   const phN=ph===1?'Force & Fondation':'Puissance & Transfert';
@@ -1246,6 +1306,7 @@ function renProgA(){
         <div class="ex-name">${nom}</div>
         ${e.note?`<div class="ex-note">${e.note}</div>`:''}
         <div class="ex-reps">${e.reps}</div>
+        ${(e.df||e.dm)?chargeHTML(e,w):''}
         <div class="ex-links">
           ${hasVid?`<a class="ex-vid" href="${e.vid}" target="_blank"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--inf)" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>Voir la vidéo</a>`:''}
           ${hasAlt?`<button class="ex-alt${active?' active':''}" onclick="openAlt('${e.id}',${JSON.stringify(e.nom)},${JSON.stringify(e.alt)})">${active?'\u2726 Alternatif actif':'\u21C4 Remplacer'}</button>`:''}
@@ -1467,6 +1528,21 @@ valider = function(prog) {
       if (ok) toast('Envoyé au coach \u2713');
       else queueLocale('vbc_seances', {prenom:S.nom,equipe:S.eq,semaine:w,type_seance:prog==='A'?S.stype:'circuit',feeling:feel,note:'',date_seance:today});
     });
+    if (prog === 'A' && S.charges) {
+      var pref = 'S' + w + '-';
+      Object.keys(S.charges).forEach(function(k) {
+        if (k.indexOf(pref) !== 0) return;
+        var val = parseFloat(S.charges[k]);
+        if (isNaN(val)) return;
+        var exId = k.slice(pref.length);
+        var all = [].concat(SALLE_P1, SALLE_P2, EXT_P1, EXT_P2);
+        var presc = '';
+        for (var i = 0; i < all.length; i++) {
+          if (all[i].id === exId) { var L = getLoad(all[i]); presc = S.eq === 'm' ? L.m : L.f; break; }
+        }
+        sbInsert('vbc_charges', {prenom:S.nom, equipe:S.eq, semaine:w, exercice:exId, charge:val, prescrit:String(presc||'')});
+      });
+    }
   }
 };
 
@@ -1896,7 +1972,22 @@ function ouvrirFicheJoueuse(nom) {
         +'<div style="flex:1">'+(done.length?done.map(function(s){return '<div style="font-size:12px;font-weight:700">'+(icons[s.type_seance]||'')+' '+(labels[s.type_seance]||s.type_seance)+'<span style="font-size:10px;color:var(--txt2);margin-left:6px">'+s.date_seance+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--txt3)">Non réalisée</div>')+'</div>'
         +'</div>';
     });
-    content.innerHTML = html;
+    sbGetCache('vbc_charges', 'prenom=eq.'+encodeURIComponent(nom)+'&order=semaine.asc', function(chs) {
+      if (chs && chs.length) {
+        html += '<div style="font-weight:800;font-size:13px;margin:16px 0 6px">\uD83C\uDFCB Charges (kg)</div>';
+        var by = {};
+        chs.forEach(function(r) {
+          if (!r.exercice || r.charge == null) return;
+          if (!by[r.exercice]) by[r.exercice] = [];
+          by[r.exercice].push(r);
+        });
+        Object.keys(by).forEach(function(id) {
+          var pts = by[id].map(function(r){return 'S'+r.semaine+' : <strong>'+r.charge+'</strong>';}).join(' \u2192 ');
+          html += '<div style="font-size:12px;padding:7px 0;border-bottom:1px solid var(--bdr)"><span style="font-weight:700">'+exoNom(id)+'</span><div style="color:var(--txt2);margin-top:2px">'+pts+'</div></div>';
+        });
+      }
+      content.innerHTML = html;
+    });
   });
 }
 
