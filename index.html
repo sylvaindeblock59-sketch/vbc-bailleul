@@ -237,12 +237,15 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 .chg-inp{width:110px;padding:9px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:16px;font-weight:700;background:var(--card)}
 /* ══ CORRECTIF SAFARI iOS : menu du bas toujours visible ══ */
 @media(max-width:859px){
-  .shell{position:fixed;inset:0;height:auto;margin:0 auto}
+  html,body{height:auto;overflow:auto;-webkit-overflow-scrolling:touch}
+  .shell{position:static;height:auto;min-height:100vh}
+  .scroll{flex:none;overflow:visible}
+  .hdr{position:sticky;top:0;z-index:400}
   .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:500;box-shadow:0 -2px 10px rgba(15,25,35,.08)}
   .scroll{padding-bottom:calc(var(--nav) + var(--safe) + 14px)}
 }
 @supports(height:100dvh){
-  @media(max-width:859px){.shell{height:100dvh}}
+  @media(max-width:859px){.shell{min-height:100dvh}}
 }
 </style>
 </head>
@@ -289,7 +292,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v8</div>
+    <div class="hdr-pill">Été 2026 · v9</div>
   </div>
 </div>
 
