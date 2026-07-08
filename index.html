@@ -231,6 +231,20 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 </style>
 </head>
 <body>
+<script>
+window.onerror = function(msg, url, line) {
+  try {
+    var b = document.getElementById('err-box');
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'err-box';
+      b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#c0392b;color:#fff;font:11px/1.4 monospace;padding:8px 10px;max-height:40%;overflow:auto';
+      (document.body || document.documentElement).appendChild(b);
+    }
+    b.textContent += 'ERREUR: ' + msg + ' (ligne ' + line + ')\n';
+  } catch(e) {}
+};
+</script>
 <div class="shell">
 
 <!-- ══ SIDEBAR PC ══ -->
@@ -259,7 +273,7 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026</div>
+    <div class="hdr-pill">Été 2026 · v4</div>
   </div>
 </div>
 
