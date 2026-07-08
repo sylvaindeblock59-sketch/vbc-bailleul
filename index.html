@@ -228,6 +228,14 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 @media(max-width:859px){.pc-sidebar{display:none}}
 
 .pin-dot.on{background:var(--pri);transform:scale(1.15)}
+/* ══ CORRECTIF SAFARI iOS : menu du bas toujours visible ══ */
+@media(max-width:859px){
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:500;box-shadow:0 -2px 10px rgba(15,25,35,.08)}
+  .scroll{padding-bottom:calc(var(--nav) + var(--safe) + 14px)}
+}
+@supports(height:100dvh){
+  @media(max-width:859px){.shell{height:100dvh}}
+}
 </style>
 </head>
 <body>
@@ -273,7 +281,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v4</div>
+    <div class="hdr-pill">Été 2026 · v5</div>
   </div>
 </div>
 
