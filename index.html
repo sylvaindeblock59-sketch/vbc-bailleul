@@ -232,6 +232,11 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 .pin-dot.on{background:var(--pri);transform:scale(1.15)}
 .pin-key{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:15px 0;font-size:20px;font-weight:800;color:var(--txt);border:1.5px solid var(--bdr);border-radius:10px;background:var(--card);cursor:pointer}
 .pin-key:active{background:var(--bg);transform:scale(.96)}
+.ci-row{margin-bottom:12px}
+.ci-lbl{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px}
+.ci-lbl small{color:var(--pri);font-size:14px;font-weight:800}
+.ci-row input[type=range]{width:100%;accent-color:var(--pri)}
+.ci-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--txt3)}
 .chg-box{margin-top:8px;background:var(--bg);border:1px dashed var(--bdr);border-radius:8px;padding:8px 10px}
 .chg-prev{font-size:11px;color:var(--txt2);margin-bottom:5px}
 .chg-lbl{font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px}
@@ -293,7 +298,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v11</div>
+    <div class="hdr-pill">Été 2026 · v13</div>
   </div>
 </div>
 
@@ -312,6 +317,18 @@ window.onerror = function(msg, url, line) {
      PAGE : ACCUEIL
 ══════════════════════════════════ -->
 <div id="pg-accueil" class="page on">
+  <div class="card" id="ci-card" style="display:none">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Mon check-in du jour</div>
+    <div class="info-box">30 secondes pour aider ton coach à adapter ta charge 💚</div>
+    <div class="ci-row"><span class="ci-lbl">😴 Sommeil <small id="ci-v-som">3</small></span><input type="range" min="1" max="5" value="3" id="ci-som" oninput="document.getElementById('ci-v-som').textContent=this.value"><div class="ci-ends"><span>Mauvais</span><span>Excellent</span></div></div>
+    <div class="ci-row"><span class="ci-lbl">🦵 Courbatures <small id="ci-v-cou">3</small></span><input type="range" min="1" max="5" value="3" id="ci-cou" oninput="document.getElementById('ci-v-cou').textContent=this.value"><div class="ci-ends"><span>Aucune</span><span>Fortes</span></div></div>
+    <div class="ci-row"><span class="ci-lbl">🔋 Fatigue <small id="ci-v-fat">3</small></span><input type="range" min="1" max="5" value="3" id="ci-fat" oninput="document.getElementById('ci-v-fat').textContent=this.value"><div class="ci-ends"><span>Fraîche</span><span>Épuisée</span></div></div>
+    <div class="ci-row"><span class="ci-lbl">😊 Humeur <small id="ci-v-hum">3</small></span><input type="range" min="1" max="5" value="3" id="ci-hum" oninput="document.getElementById('ci-v-hum').textContent=this.value"><div class="ci-ends"><span>Bof</span><span>Au top</span></div></div>
+    <button class="btn btn-grn" onclick="validerCheckin()" style="margin-bottom:0">Envoyer mon check-in ✓</button>
+  </div>
+  <div class="card" id="ci-done" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:800;font-size:13px">Check-in du jour envoyé</div><div style="font-size:11px;color:var(--txt2)">À demain !</div></div></div>
+  </div>
 
   <div class="metrics">
     <div class="met">
@@ -677,6 +694,33 @@ window.onerror = function(msg, url, line) {
       </div>
     </div>
     <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Bien-être du groupe</div>
+      <div class="info-box">Check-ins quotidiens des joueuses — les scores les plus bas en premier.</div>
+      <div id="be-liste"></div>
+      <button onclick="chargerBienEtre()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Tests physiques</div>
+      <div class="info-box">Mesure en S1, S4 et S8 — la progression apparaît dans chaque fiche.</div>
+      <span class="label">Test</span>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button onclick="tstSetType('detente')" id="tst-detente" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--pri);background:var(--pri);color:#fff;font-size:11px;font-weight:700;cursor:pointer">Détente</button>
+        <button onclick="tstSetType('sprint')" id="tst-sprint" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--bdr);background:var(--card);color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">Sprint 10m</button>
+        <button onclick="tstSetType('gainage')" id="tst-gainage" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--bdr);background:var(--card);color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">Gainage</button>
+      </div>
+      <span class="label">Semaine</span>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button onclick="tstSetSem(1)" id="tst-s1" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--pri);background:var(--pri);color:#fff;font-size:11px;font-weight:700;cursor:pointer">S1</button>
+        <button onclick="tstSetSem(4)" id="tst-s4" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--bdr);background:var(--card);color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">S4</button>
+        <button onclick="tstSetSem(8)" id="tst-s8" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--bdr);background:var(--card);color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">S8</button>
+      </div>
+      <span class="label">Joueuse / joueur</span>
+      <select id="tst-nom" style="margin-bottom:10px"><option value="">-- Choisir --</option></select>
+      <span class="label">Résultat (<span id="tst-unite">cm</span>)</span>
+      <input type="number" inputmode="decimal" step="0.1" id="tst-val" placeholder="Ex : 42" style="margin-bottom:10px">
+      <button class="btn btn-grn" onclick="validerTest()" style="margin-bottom:0">Enregistrer le test &#10003;</button>
+    </div>
+    <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Présences entraînement</div>
       <div class="info-box">Coche les présentes, valide — le taux de présence apparaît dans chaque fiche.</div>
       <span class="label">Date de l'entraînement</span>
@@ -732,7 +776,7 @@ window.onerror = function(msg, url, line) {
 </div>
 
 <!-- MODAL FICHE JOUEUSE -->
-<div class="modal-bg" id="modal-joueuse" style="pointer-events:none">
+<div class="modal-bg" id="modal-joueuse" onclick="if(event.target===this)fermerFicheJoueuse()">
   <div class="modal">
     <div class="modal-hd">
       <span id="modal-joueuse-titre">Fiche</span>
@@ -827,7 +871,7 @@ function sbPost(table, data, cb) {
   try { xhr.send(JSON.stringify(data)); } catch(e) { if (cb) cb(false); }
 }
 
-var TABLES_CLUB = ['vbc_seances','vbc_players','vbc_charges','vbc_presences'];
+var TABLES_CLUB = ['vbc_seances','vbc_players','vbc_charges','vbc_presences','vbc_checkins','vbc_tests'];
 function sbGet(table, params, cb) {
   if (TABLES_CLUB.indexOf(table) >= 0) params = (params ? params+'&' : '') + 'club=is.null';
   var q = params ? '?'+params : '';
@@ -1440,6 +1484,7 @@ function closeModal(){document.getElementById('modal-bg').classList.remove('vis'
 // ACCUEIL
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function renAccueil(){
+  renCheckin();
   const tot=Object.keys(S.done).length;const pct=Math.round(tot/16*100);
   document.getElementById('h-done').textContent=tot;
   document.getElementById('h-pct').textContent=pct+'%';
@@ -1714,6 +1759,8 @@ function renStats() {
 function renCoachDash() {
   renPrListe();
   chargerPrResume();
+  chargerBienEtre();
+  remplirTstNoms();
   var all = S.players || [];
   var tot = document.getElementById('c-tot');
   var done = document.getElementById('c-done');
@@ -2064,6 +2111,96 @@ function chargerPrResume() {
     el.innerHTML = h;
   });
 }
+function renCheckin() {
+  var card = document.getElementById('ci-card');
+  var done = document.getElementById('ci-done');
+  if (!card || !done) return;
+  var today = new Date().toISOString().slice(0,10);
+  if (!S.nom) { card.style.display='none'; done.style.display='none'; return; }
+  if (S.lastCheckin === today) { card.style.display='none'; done.style.display='block'; }
+  else { card.style.display='block'; done.style.display='none'; }
+}
+function validerCheckin() {
+  var today = new Date().toISOString().slice(0,10);
+  var som = parseInt(document.getElementById('ci-som').value);
+  var cou = parseInt(document.getElementById('ci-cou').value);
+  var fat = parseInt(document.getElementById('ci-fat').value);
+  var hum = parseInt(document.getElementById('ci-hum').value);
+  sbInsert('vbc_checkins', {prenom:S.nom, equipe:S.eq, date_checkin:today, sommeil:som, courbatures:cou, fatigue:fat, humeur:hum});
+  S.lastCheckin = today;
+  saveS();
+  renCheckin();
+  toast('Merci ! Check-in envoy\u00e9 \u2713');
+}
+function scoreBienEtre(c) {
+  return (c.sommeil + (6-c.courbatures) + (6-c.fatigue) + c.humeur) / 4;
+}
+function chargerBienEtre() {
+  var el = document.getElementById('be-liste');
+  if (!el) return;
+  sbGetCache('vbc_checkins', 'order=date_checkin.desc&limit=300', function(rows, ok) {
+    if (!rows || !rows.length) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:4px 0">Aucun check-in re\u00e7u pour le moment.</div>'; return; }
+    var latest = {};
+    rows.forEach(function(r) { if (!latest[r.prenom]) latest[r.prenom] = r; });
+    var arr = Object.keys(latest).map(function(k){ var r=latest[k]; r._score=scoreBienEtre(r); return r; });
+    arr.sort(function(a,b){ return a._score - b._score; });
+    var today = new Date();
+    var h = '';
+    arr.forEach(function(r) {
+      var s = r._score;
+      var dot = s >= 3.8 ? '\uD83D\uDFE2' : s >= 2.8 ? '\uD83D\uDFE1' : '\uD83D\uDD34';
+      var d = new Date(r.date_checkin);
+      var age = Math.round((today - d) / 86400000);
+      var ageTxt = age <= 0 ? "aujourd'hui" : age === 1 ? 'hier' : 'il y a '+age+' j';
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr)">'
+        + '<span style="font-size:14px">'+dot+'</span>'
+        + '<span style="flex:1;font-size:13px;font-weight:700">'+r.prenom+'</span>'
+        + '<span style="font-size:11px;color:var(--txt2)">'+s.toFixed(1)+'/5 \u00b7 '+ageTxt+'</span>'
+        + '</div>';
+    });
+    var reds = arr.filter(function(r){return r._score < 2.8;}).length;
+    if (reds > 0) h = '<div style="background:var(--acc-bg,#fdecea);border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;color:var(--acc);margin-bottom:8px">\u26A0 '+reds+' joueuse'+(reds>1?'s':'')+' en zone rouge \u2014 pense \u00e0 all\u00e9ger ou \u00e0 prendre des nouvelles</div>' + h;
+    el.innerHTML = h;
+  });
+}
+var _tstType = 'detente', _tstSem = 1;
+function tstSetType(t) {
+  _tstType = t;
+  ['detente','sprint','gainage'].forEach(function(x) {
+    var b = document.getElementById('tst-'+x);
+    if (b) { b.style.background = x===t?'var(--pri)':'var(--card)'; b.style.borderColor = x===t?'var(--pri)':'var(--bdr)'; b.style.color = x===t?'#fff':'var(--txt2)'; }
+  });
+  var u = document.getElementById('tst-unite');
+  if (u) u.textContent = t==='detente' ? 'cm' : t==='sprint' ? 'secondes (10 m)' : 'secondes';
+}
+function tstSetSem(s) {
+  _tstSem = s;
+  [1,4,8].forEach(function(x) {
+    var b = document.getElementById('tst-s'+x);
+    if (b) { b.style.background = x===s?'var(--pri)':'var(--card)'; b.style.borderColor = x===s?'var(--pri)':'var(--bdr)'; b.style.color = x===s?'#fff':'var(--txt2)'; }
+  });
+}
+function validerTest() {
+  var sel = document.getElementById('tst-nom');
+  var val = parseFloat(document.getElementById('tst-val').value);
+  if (!sel || !sel.value) { toast('Choisis une joueuse'); return; }
+  if (isNaN(val)) { toast('Entre une valeur'); return; }
+  var p = null;
+  (S.players||[]).forEach(function(x){ if (x.name === sel.value) p = x; });
+  sbInsert('vbc_tests', {prenom:sel.value, equipe:p?p.eq:'', semaine:_tstSem, test:_tstType, valeur:val});
+  document.getElementById('tst-val').value = '';
+  toast('Test enregistr\u00e9 : '+sel.value.split(' ')[0]+' \u2713');
+}
+function remplirTstNoms() {
+  var sel = document.getElementById('tst-nom');
+  if (!sel || sel.options.length > 1) return;
+  (S.players||[]).forEach(function(p) {
+    if (p.active === false) return;
+    var o = document.createElement('option');
+    o.value = p.name; o.textContent = (p.eq==='f'?'\u2640 ':'\u2642 ')+p.name;
+    sel.appendChild(o);
+  });
+}
 function ouvrirFicheJoueuse(nom) {
   var modal = document.getElementById('modal-joueuse');
   var titre = document.getElementById('modal-joueuse-titre');
@@ -2073,7 +2210,9 @@ function ouvrirFicheJoueuse(nom) {
   if (content) content.innerHTML = '<div style="text-align:center;padding:20px;color:var(--txt2)">Chargement...</div>';
   modal.classList.add('vis');
   document.body.style.overflow = 'hidden';
-  sbGetCache('vbc_seances', 'prenom=eq.'+encodeURIComponent(nom)+'&order=semaine.asc', function(seances, ok, cacheTs) {
+  var prn = nom.split(' ')[0];
+  var fNom = 'or=(prenom.eq.'+encodeURIComponent('"'+nom+'"')+',prenom.eq.'+encodeURIComponent('"'+prn+'"')+')';
+  sbGetCache('vbc_seances', fNom+'&order=semaine.asc', function(seances, ok, cacheTs) {
     if (!content) return;
     var total = seances.length;
     var pct = Math.round(total/16*100);
@@ -2093,13 +2232,31 @@ function ouvrirFicheJoueuse(nom) {
         +'<div style="flex:1">'+(done.length?done.map(function(s){return '<div style="font-size:12px;font-weight:700">'+(icons[s.type_seance]||'')+' '+(labels[s.type_seance]||s.type_seance)+'<span style="font-size:10px;color:var(--txt2);margin-left:6px">'+s.date_seance+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--txt3)">Non réalisée</div>')+'</div>'
         +'</div>';
     });
-    sbGetCache('vbc_presences', 'prenom=eq.'+encodeURIComponent(nom), function(prs) {
+    sbGetCache('vbc_presences', fNom, function(prs) {
       if (prs && prs.length) {
         var pres = prs.filter(function(r){return r.present;}).length;
         var pc = Math.round(pres / prs.length * 100);
         html += '<div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:14px"><span style="font-size:12px;font-weight:700">Pr\u00e9sences aux entra\u00eenements</span><strong style="font-size:14px;color:'+(pc>=75?'var(--grn)':pc>=50?'#d4691e':'var(--acc)')+'">'+pres+'/'+prs.length+' ('+pc+'%)</strong></div>';
       }
-    sbGetCache('vbc_charges', 'prenom=eq.'+encodeURIComponent(nom)+'&order=semaine.asc', function(chs) {
+    sbGetCache('vbc_tests', fNom+'&order=semaine.asc', function(tsts) {
+      if (tsts && tsts.length) {
+        var noms = {detente:'D\u00e9tente (cm)', sprint:'Sprint 10m (s)', gainage:'Gainage (s)'};
+        var byT = {};
+        tsts.forEach(function(r){ if(!byT[r.test])byT[r.test]=[]; byT[r.test].push(r); });
+        html += '<div style="font-weight:800;font-size:13px;margin:16px 0 6px">\uD83D\uDCC8 Tests physiques</div>';
+        Object.keys(byT).forEach(function(t) {
+          var pts = byT[t].map(function(r){return 'S'+r.semaine+' : <strong>'+r.valeur+'</strong>';}).join(' \u2192 ');
+          var first = byT[t][0].valeur, last = byT[t][byT[t].length-1].valeur;
+          var delta = '';
+          if (byT[t].length > 1 && first) {
+            var d = last - first;
+            var mieux = (t==='sprint') ? d < 0 : d > 0;
+            delta = ' <span style="font-weight:800;color:'+(mieux?'var(--grn)':'var(--acc)')+'">('+(d>0?'+':'')+Math.round(d*10)/10+')</span>';
+          }
+          html += '<div style="font-size:12px;padding:7px 0;border-bottom:1px solid var(--bdr)"><span style="font-weight:700">'+(noms[t]||t)+'</span><div style="color:var(--txt2);margin-top:2px">'+pts+delta+'</div></div>';
+        });
+      }
+    sbGetCache('vbc_charges', fNom+'&order=semaine.asc', function(chs) {
       if (chs && chs.length) {
         html += '<div style="font-weight:800;font-size:13px;margin:16px 0 6px">\uD83C\uDFCB Charges (kg)</div>';
         var by = {};
@@ -2114,6 +2271,7 @@ function ouvrirFicheJoueuse(nom) {
         });
       }
       content.innerHTML = html;
+    });
     });
     });
   });
