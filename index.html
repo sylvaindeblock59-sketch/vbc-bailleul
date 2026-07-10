@@ -293,7 +293,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v10</div>
+    <div class="hdr-pill">Été 2026 · v11</div>
   </div>
 </div>
 
@@ -677,6 +677,20 @@ window.onerror = function(msg, url, line) {
       </div>
     </div>
     <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Présences entraînement</div>
+      <div class="info-box">Coche les présentes, valide — le taux de présence apparaît dans chaque fiche.</div>
+      <span class="label">Date de l'entraînement</span>
+      <input type="date" id="pr-date" style="margin-bottom:10px">
+      <span class="label">Équipe</span>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button onclick="prSetEq('f')" id="pr-eq-f" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--pri);background:var(--pri);color:#fff;font-size:11px;font-weight:700;cursor:pointer">&#9792; N2F</button>
+        <button onclick="prSetEq('m')" id="pr-eq-m" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--bdr);background:var(--card);color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">&#9794; N3M</button>
+      </div>
+      <div id="pr-liste" style="margin-bottom:10px"></div>
+      <button class="btn btn-grn" onclick="validerPresences()" style="margin-bottom:0">Valider les présences &#10003;</button>
+      <div id="pr-resume" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saisir une séance passée</div>
       <div class="info-box">Pour rattraper les séances effectuées avant la mise à jour.</div>
       <span class="label">Joueuse</span>
@@ -813,7 +827,9 @@ function sbPost(table, data, cb) {
   try { xhr.send(JSON.stringify(data)); } catch(e) { if (cb) cb(false); }
 }
 
+var TABLES_CLUB = ['vbc_seances','vbc_players','vbc_charges','vbc_presences'];
 function sbGet(table, params, cb) {
+  if (TABLES_CLUB.indexOf(table) >= 0) params = (params ? params+'&' : '') + 'club=is.null';
   var q = params ? '?'+params : '';
   var xhr = new XMLHttpRequest();
   xhr.open('GET', SB_URL+'/rest/v1/'+table+q, true);
@@ -1696,6 +1712,8 @@ function renStats() {
 }
 
 function renCoachDash() {
+  renPrListe();
+  chargerPrResume();
   var all = S.players || [];
   var tot = document.getElementById('c-tot');
   var done = document.getElementById('c-done');
@@ -1986,6 +2004,66 @@ function chargerStats() {
   });
 }
 
+var _prEq = 'f', _prAbs = {};
+function prSetEq(t) {
+  _prEq = t; _prAbs = {};
+  var f = document.getElementById('pr-eq-f'), m = document.getElementById('pr-eq-m');
+  if (f) { f.style.background = t==='f'?'var(--pri)':'var(--card)'; f.style.borderColor = t==='f'?'var(--pri)':'var(--bdr)'; f.style.color = t==='f'?'#fff':'var(--txt2)'; }
+  if (m) { m.style.background = t==='m'?'var(--pri)':'var(--card)'; m.style.borderColor = t==='m'?'var(--pri)':'var(--bdr)'; m.style.color = t==='m'?'#fff':'var(--txt2)'; }
+  renPrListe();
+}
+function renPrListe() {
+  var el = document.getElementById('pr-liste');
+  if (!el) return;
+  var dateEl = document.getElementById('pr-date');
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0,10);
+  var ps = (S.players||[]).filter(function(p){return p.eq === _prEq && p.active !== false;});
+  if (!ps.length) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:6px 0">Aucun joueur dans cette \u00e9quipe.</div>'; return; }
+  var h = '';
+  ps.forEach(function(p) {
+    var abs = !!_prAbs[p.name];
+    h += '<button onclick="prToggle(\''+p.name.replace(/'/g,"\\'")+'\')" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;margin-bottom:5px;border-radius:8px;border:1.5px solid '+(abs?'var(--bdr)':'var(--grn)')+';background:'+(abs?'var(--bg)':'var(--grn-bg)')+';cursor:pointer">'
+      + '<span style="width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;background:'+(abs?'var(--card)':'var(--grn)')+';color:'+(abs?'var(--txt3)':'#fff')+';border:1.5px solid '+(abs?'var(--bdr)':'var(--grn)')+'">'+(abs?'':'\u2713')+'</span>'
+      + '<span style="font-size:13px;font-weight:700;color:'+(abs?'var(--txt3)':'var(--txt)')+(abs?';text-decoration:line-through':'')+'">'+p.name+'</span>'
+      + '</button>';
+  });
+  el.innerHTML = h;
+}
+function prToggle(nom) { _prAbs[nom] = !_prAbs[nom]; renPrListe(); }
+function validerPresences() {
+  var d = document.getElementById('pr-date').value;
+  if (!d) { toast('Choisis une date'); return; }
+  var ps = (S.players||[]).filter(function(p){return p.eq === _prEq && p.active !== false;});
+  if (!ps.length) return;
+  ps.forEach(function(p) {
+    sbInsert('vbc_presences', {prenom:p.name, equipe:_prEq, date_entrainement:d, present:!_prAbs[p.name]});
+  });
+  var nb = ps.filter(function(p){return !_prAbs[p.name];}).length;
+  toast('Pr\u00e9sences enregistr\u00e9es : '+nb+'/'+ps.length+' \u2713');
+  _prAbs = {};
+  setTimeout(chargerPrResume, 800);
+}
+function chargerPrResume() {
+  var el = document.getElementById('pr-resume');
+  if (!el) return;
+  sbGetCache('vbc_presences', 'order=date_entrainement.desc&limit=300', function(rows, ok) {
+    if (!rows || !rows.length) { el.innerHTML = ''; return; }
+    var byD = {};
+    rows.forEach(function(r) {
+      var k = r.date_entrainement + '|' + r.equipe;
+      if (!byD[k]) byD[k] = {p:0, t:0, d:r.date_entrainement, eq:r.equipe};
+      byD[k].t++;
+      if (r.present) byD[k].p++;
+    });
+    var keys = Object.keys(byD).sort().reverse().slice(0,5);
+    var h = '<div style="font-weight:800;font-size:12px;margin-bottom:6px">Derniers entra\u00eenements</div>';
+    keys.forEach(function(k) {
+      var v = byD[k];
+      h += '<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--bdr)"><span>'+v.d+' \u00b7 '+(v.eq==='f'?'\u2640 N2F':'\u2642 N3M')+'</span><strong>'+v.p+'/'+v.t+' pr\u00e9sents</strong></div>';
+    });
+    el.innerHTML = h;
+  });
+}
 function ouvrirFicheJoueuse(nom) {
   var modal = document.getElementById('modal-joueuse');
   var titre = document.getElementById('modal-joueuse-titre');
@@ -2015,6 +2093,12 @@ function ouvrirFicheJoueuse(nom) {
         +'<div style="flex:1">'+(done.length?done.map(function(s){return '<div style="font-size:12px;font-weight:700">'+(icons[s.type_seance]||'')+' '+(labels[s.type_seance]||s.type_seance)+'<span style="font-size:10px;color:var(--txt2);margin-left:6px">'+s.date_seance+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--txt3)">Non réalisée</div>')+'</div>'
         +'</div>';
     });
+    sbGetCache('vbc_presences', 'prenom=eq.'+encodeURIComponent(nom), function(prs) {
+      if (prs && prs.length) {
+        var pres = prs.filter(function(r){return r.present;}).length;
+        var pc = Math.round(pres / prs.length * 100);
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:14px"><span style="font-size:12px;font-weight:700">Pr\u00e9sences aux entra\u00eenements</span><strong style="font-size:14px;color:'+(pc>=75?'var(--grn)':pc>=50?'#d4691e':'var(--acc)')+'">'+pres+'/'+prs.length+' ('+pc+'%)</strong></div>';
+      }
     sbGetCache('vbc_charges', 'prenom=eq.'+encodeURIComponent(nom)+'&order=semaine.asc', function(chs) {
       if (chs && chs.length) {
         html += '<div style="font-weight:800;font-size:13px;margin:16px 0 6px">\uD83C\uDFCB Charges (kg)</div>';
@@ -2030,6 +2114,7 @@ function ouvrirFicheJoueuse(nom) {
         });
       }
       content.innerHTML = html;
+    });
     });
   });
 }
