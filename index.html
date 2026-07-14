@@ -299,7 +299,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v14</div>
+    <div class="hdr-pill">Été 2026 · v15</div>
   </div>
 </div>
 
@@ -405,10 +405,10 @@ window.onerror = function(msg, url, line) {
     <div class="info-box">Remplis ce profil une seule fois. <strong>Ton équipe détermine les charges affichées</strong> dans tout le programme — les joueuses N2F et les joueurs N3M n'ont pas les mêmes prescriptions.</div>
 
     <span class="label">Prénom</span>
-    <input type="text" id="p-nom" placeholder="Ex : Marie" oninput="saveProfil()">
+    <select id="p-nom" onchange="saveProfil()"><option value="">-- Choisis ton nom --</option></select>
 
     <span class="label">Mon équipe</span>
-    <select id="p-eq" onchange="saveProfil()">
+    <select id="p-eq" onchange="remplirNomsProfil();saveProfil()">
       <option value="">— Choisir mon équipe —</option>
       <option value="f">♀ Équipe féminine N2 → charges adaptées N2F</option>
       <option value="m">♂ Équipe masculine N3 → charges adaptées N3M</option>
@@ -867,7 +867,7 @@ function sbPost(table, data, cb) {
   xhr.setRequestHeader('Prefer', 'return=minimal');
   xhr.onreadystatechange = function() {
     if (xhr.readyState === 4) {
-      if (cb) cb(xhr.status >= 200 && xhr.status < 300);
+      if (cb) cb((xhr.status >= 200 && xhr.status < 300) || xhr.status === 409);
     }
   };
   xhr.onerror = function() { if (cb) cb(false); };
@@ -1198,9 +1198,25 @@ function saveProfil(){
     saveS();
   } else r.style.display='none';
 }
+function remplirNomsProfil(){
+  var sel=document.getElementById('p-nom');
+  if(!sel)return;
+  var eq=document.getElementById('p-eq').value;
+  var cur=sel.value;
+  sel.innerHTML='<option value="">-- Choisis ton nom --</option>';
+  (S.players||[]).forEach(function(p){
+    if(p.active===false)return;
+    if(eq&&p.eq!==eq)return;
+    var o=document.createElement('option');
+    o.value=p.name;o.textContent=p.name;
+    sel.appendChild(o);
+  });
+  if(cur)sel.value=cur;
+}
 function restoreProfil(){
-  if(S.nom)document.getElementById('p-nom').value=S.nom;
   if(S.eq)document.getElementById('p-eq').value=S.eq;
+  remplirNomsProfil();
+  if(S.nom)document.getElementById('p-nom').value=S.nom;
   if(S.poste)document.getElementById('p-pos').value=S.poste;
   if(S.poids)document.getElementById('p-pds').value=S.poids;
   if(S.nom&&S.eq)saveProfil();
@@ -1608,6 +1624,9 @@ loadS = function() {
 // Patch valider() pour envoyer à Supabase
 var _origValider = valider;
 valider = function(prog) {
+  if (window._validLock) { toast('D\u00e9j\u00e0 en cours d\u2019envoi\u2026'); return; }
+  window._validLock = true;
+  setTimeout(function(){ window._validLock = false; }, 5000);
   _origValider(prog);
   if (S.nom && S.eq) {
     var w = prog==='A' ? S.week : S.cweek;
