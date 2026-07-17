@@ -299,7 +299,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v17</div>
+    <div class="hdr-pill">Été 2026 · v18</div>
   </div>
 </div>
 
@@ -1406,7 +1406,7 @@ function renProgA(){
   const warm=S.stype==='salle'?'\uD83D\uDEB4 10 min vélo ou corde à sauter + 5 min mobilisation':'\uD83C\uDFC3 8 min course légère 8 km/h + mobilisation dynamique 3 min';
 
   document.getElementById('s-week-lbl').innerHTML=
-    `Semaine ${w} <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${phC};color:#fff;margin-left:4px">${phN}</span>`;
+    `Semaine ${w}<br><span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${phC};color:#fff;white-space:nowrap;margin-top:3px">${phN}</span>`;
   document.getElementById('s-info-box').innerHTML=`
     <div style="margin-bottom:6px">
       <div class="prog-row"><span style="font-weight:700;color:var(--txt)">${THEMES[w-1]}</span><span style="font-weight:700;color:${phC}">${inten}%</span></div>
