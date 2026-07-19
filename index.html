@@ -299,7 +299,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v18</div>
+    <div class="hdr-pill">Été 2026 · v19</div>
   </div>
 </div>
 
@@ -736,6 +736,19 @@ window.onerror = function(msg, url, line) {
       <div id="pr-liste" style="margin-bottom:10px"></div>
       <button class="btn btn-grn" onclick="validerPresences()" style="margin-bottom:0">Valider les présences &#10003;</button>
       <div id="pr-resume" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Gérer l'effectif</div>
+      <div class="info-box">Ajoute ou retire un joueur — tous les téléphones se mettent à jour automatiquement.</div>
+      <span class="label">Ajouter : prénom (et nom)</span>
+      <input type="text" id="ef-nom" placeholder="Ex : Léa Dupont" style="margin-bottom:8px">
+      <span class="label">Équipe</span>
+      <select id="ef-eq" style="margin-bottom:10px">
+        <option value="f">&#9792; Féminine N2</option>
+        <option value="m">&#9794; Masculine N3</option>
+      </select>
+      <button class="btn btn-grn" onclick="ajouterJoueur()" style="margin-bottom:14px">Ajouter à l'effectif &#10003;</button>
+      <div id="ef-liste"></div>
     </div>
     <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saisir une séance passée</div>
@@ -1696,6 +1709,7 @@ function loadMesSeances() {
 }
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 loadS();
+syncEffectif(function(){restoreProfil();remplirNomsProfil();});
 restoreProfil();
 loadMesSeances();
 restoreRM();
@@ -1817,6 +1831,7 @@ function renCoachDash() {
   chargerPrResume();
   chargerBienEtre();
   remplirTstNoms();
+  renEffectif();
   var all = S.players || [];
   var tot = document.getElementById('c-tot');
   var done = document.getElementById('c-done');
@@ -2107,6 +2122,67 @@ function chargerStats() {
   });
 }
 
+function syncEffectif(cb) {
+  sbGet('vbc_players', 'order=created_at.asc', function(rows) {
+    (rows || []).forEach(function(r) {
+      if (!r.name) return;
+      var ex = null;
+      (S.players || []).forEach(function(p) { if (p.name === r.name) ex = p; });
+      if (ex) {
+        if (r.active === false) ex.active = false;
+        if (r.active === true) ex.active = true;
+        if (r.equipe) ex.eq = r.equipe;
+      } else if (r.active !== false) {
+        S.players.push({id:'db-'+(r.id||Math.random().toString(36).slice(2)), name:r.name, eq:r.equipe||'f', poste:'', maillot:0, active:true, preset:false});
+      }
+    });
+    saveS();
+    if (cb) cb();
+  });
+}
+function ajouterJoueur() {
+  var nomEl = document.getElementById('ef-nom');
+  var nom = (nomEl.value || '').trim();
+  var eq = document.getElementById('ef-eq').value;
+  if (nom.length < 2) { toast('Entre un nom'); return; }
+  var doublon = false;
+  (S.players || []).forEach(function(p) { if (p.name.toLowerCase() === nom.toLowerCase()) doublon = true; });
+  if (doublon) { toast('Ce nom existe d\u00e9j\u00e0 dans l\u2019effectif'); return; }
+  S.players.push({id:'loc-'+Date.now(), name:nom, eq:eq, poste:'', maillot:0, active:true, preset:false});
+  saveS();
+  sbInsert('vbc_players', {id:'j-'+Date.now(), name:nom, equipe:eq, active:true});
+  nomEl.value = '';
+  toast(nom + ' ajout\u00e9' + (eq==='f'?'e':'') + ' \u2713');
+  renEffectif(); renPrListe();
+}
+function toggleJoueur(nom) {
+  var p = null;
+  (S.players || []).forEach(function(x) { if (x.name === nom) p = x; });
+  if (!p) return;
+  p.active = p.active === false;
+  saveS();
+  sbInsert('vbc_players', {id:'chg-'+Date.now(), name:p.name, equipe:p.eq, active:p.active});
+  toast(p.name.split(' ')[0] + (p.active ? ' r\u00e9int\u00e9gr\u00e9' : ' retir\u00e9') + ' \u2713');
+  renEffectif(); renPrListe();
+}
+function renEffectif() {
+  var el = document.getElementById('ef-liste');
+  if (!el) return;
+  var h = '';
+  ['f','m'].forEach(function(eq) {
+    var ps = (S.players || []).filter(function(p) { return p.eq === eq; });
+    if (!ps.length) return;
+    h += '<div style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);margin:10px 0 4px">' + (eq==='f' ? '\u2640 F\u00e9minine N2' : '\u2642 Masculine N3') + '</div>';
+    ps.forEach(function(p) {
+      var off = p.active === false;
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)">'
+        + '<span style="flex:1;font-size:13px;font-weight:700;color:' + (off?'var(--txt3)':'var(--txt)') + (off?';text-decoration:line-through':'') + '">' + p.name + '</span>'
+        + '<button onclick="toggleJoueur(\'' + p.name.replace(/'/g,"\\'") + '\')" style="padding:5px 10px;border-radius:7px;border:1.5px solid ' + (off?'var(--grn)':'var(--bdr)') + ';background:' + (off?'var(--grn-bg)':'var(--bg)') + ';color:' + (off?'var(--grn)':'var(--txt3)') + ';font-size:11px;font-weight:700;cursor:pointer">' + (off?'R\u00e9int\u00e9grer':'Retirer') + '</button>'
+        + '</div>';
+    });
+  });
+  el.innerHTML = h;
+}
 var _prEq = 'f', _prAbs = {};
 function prSetEq(t) {
   _prEq = t; _prAbs = {};
