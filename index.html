@@ -299,7 +299,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v19</div>
+    <div class="hdr-pill">Été 2026 · v20</div>
   </div>
 </div>
 
@@ -1450,6 +1450,15 @@ function renProgA(){
 }
 
 var PROG_MAX=8, SEM_TOTAL=12;
+var PROG_DEBUT = new Date('2026-06-29');
+function estRetro(sem, dateStr) {
+  if (!sem || !dateStr) return false;
+  var d = new Date(dateStr);
+  if (isNaN(d)) return false;
+  var debut = new Date(PROG_DEBUT.getTime() + (sem-1)*7*86400000);
+  var fin = new Date(debut.getTime() + 9*86400000); // semaine + 2 jours de tolérance
+  return d < debut || d >= fin;
+}
 function chW(d){S.week=Math.max(1,Math.min(SEM_TOTAL,S.week+d));saveS();renProgA();}
 
 function renProgB(){
@@ -1964,8 +1973,9 @@ function chargerSuivi() {
     }
     var byP = {};
     seances.forEach(function(s) {
-      if (!byP[s.prenom]) byP[s.prenom] = {eq:s.equipe, sem:[]};
+      if (!byP[s.prenom]) byP[s.prenom] = {eq:s.equipe, sem:[], retro:[]};
       byP[s.prenom].sem.push(s.semaine);
+      if (estRetro(s.semaine, s.date_seance)) byP[s.prenom].retro.push(s.semaine);
     });
     var W = [1,2,3,4,5,6,7,8];
     var h = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:var(--bg)">'
@@ -1975,10 +1985,15 @@ function chargerSuivi() {
     Object.keys(byP).sort().forEach(function(nom) {
       var d = byP[nom];
       h += '<tr style="border-top:1px solid var(--bdr)"><td style="padding:5px 4px;font-weight:600">'+nom+'</td>'
-        +W.map(function(w){return d.sem.indexOf(w)>=0?'<td style="text-align:center;color:var(--grn);font-weight:700">\u2713</td>':'<td style="text-align:center;color:var(--bdr)">-</td>';}).join('')
+        +W.map(function(w){
+          if (d.sem.indexOf(w) < 0) return '<td style="text-align:center;color:var(--bdr)">-</td>';
+          if (d.retro.indexOf(w) >= 0) return '<td style="text-align:center;color:#d4691e;font-weight:700" title="Saisie a posteriori">\u2713\u1D57</td>';
+          return '<td style="text-align:center;color:var(--grn);font-weight:700">\u2713</td>';
+        }).join('')
         +'<td style="text-align:center;font-weight:700;color:var(--grn)">'+d.sem.length+'</td></tr>';
     });
     h += '</tbody></table></div>';
+    h += '<div style="font-size:10px;color:var(--txt3);margin-top:6px"><span style="color:var(--grn);font-weight:700">\u2713</span> valid\u00e9e dans la semaine \u00b7 <span style="color:#d4691e;font-weight:700">\u2713\u1D57</span> saisie a posteriori</div>';
     h += '<button onclick="chargerSuivi()" class="btn btn-ghost" style="margin-top:8px;padding:7px;font-size:11px">\u21BB Actualiser</button>';
     el.innerHTML = note + h;
   });
@@ -2361,7 +2376,7 @@ function ouvrirFicheJoueuse(nom) {
       var done = seances.filter(function(s){return s.semaine===w;});
       html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr)">'
         +'<div style="width:36px;height:36px;border-radius:8px;background:'+(done.length?'var(--grn-bg)':'var(--bg)')+';border:1.5px solid '+(done.length?'var(--grn)':'var(--bdr)')+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:'+(done.length?'var(--grn)':'var(--txt3)')+';flex-shrink:0">S'+w+'</div>'
-        +'<div style="flex:1">'+(done.length?done.map(function(s){return '<div style="font-size:12px;font-weight:700">'+(icons[s.type_seance]||'')+' '+(labels[s.type_seance]||s.type_seance)+'<span style="font-size:10px;color:var(--txt2);margin-left:6px">'+s.date_seance+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--txt3)">Non réalisée</div>')+'</div>'
+        +'<div style="flex:1">'+(done.length?done.map(function(s){return '<div style="font-size:12px;font-weight:700">'+(icons[s.type_seance]||'')+' '+(labels[s.type_seance]||s.type_seance)+'<span style="font-size:10px;color:var(--txt2);margin-left:6px">'+s.date_seance+'</span>'+(estRetro(s.semaine,s.date_seance)?'<span style="font-size:9px;font-weight:800;color:#d4691e;background:#fdf3ea;border-radius:6px;padding:1px 6px;margin-left:6px">A POSTERIORI</span>':'')+'</div>';}).join(''):'<div style="font-size:12px;color:var(--txt3)">Non réalisée</div>')+'</div>'
         +'</div>';
     });
     sbGetCache('vbc_presences', fNom, function(prs) {
