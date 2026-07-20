@@ -299,7 +299,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v20</div>
+    <div class="hdr-pill">Été 2026 · v21</div>
   </div>
 </div>
 
@@ -629,6 +629,16 @@ window.onerror = function(msg, url, line) {
     <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Répartition</div>
       <div id="st-repartition"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0012 0V2z"/></svg>Classement assiduité</div>
+      <div class="info-box">Podium des plus assidus \u2014 id\u00e9al \u00e0 partager \u00e0 mi-parcours pour motiver !</div>
+      <div id="st-classement"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Progression des charges</div>
+      <div class="info-box">Plus belles progressions et \u00e9volution du poids soulev\u00e9.</div>
+      <div id="st-progression"></div>
     </div>
     <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Fiches individuelles</div>
@@ -2056,6 +2066,81 @@ function validerRetro() {
 }
 
 var _stFiltre = 'all';
+function chargerClassement() {
+  var el = document.getElementById('st-classement');
+  if (!el) return;
+  sbGetCache('vbc_seances', 'order=semaine.asc&limit=800', function(seances, ok) {
+    var pres = null;
+    sbGetCache('vbc_presences', 'limit=800', function(prows) {
+      var data = seances || [];
+      if (_stFiltre !== 'all') data = data.filter(function(s){return s.equipe === _stFiltre;});
+      var byN = {};
+      data.forEach(function(s) {
+        if (!byN[s.prenom]) byN[s.prenom] = {sea:0, pres:0, tot:0, eq:s.equipe};
+        byN[s.prenom].sea++;
+      });
+      (prows || []).forEach(function(p) {
+        if (_stFiltre !== 'all' && p.equipe !== _stFiltre) return;
+        if (!byN[p.prenom]) byN[p.prenom] = {sea:0, pres:0, tot:0, eq:p.equipe};
+        byN[p.prenom].tot++;
+        if (p.present) byN[p.prenom].pres++;
+      });
+      var arr = Object.keys(byN).map(function(n){
+        var d = byN[n];
+        var tauxPres = d.tot ? Math.round(d.pres/d.tot*100) : null;
+        var score = d.sea + (d.pres * 0.5);
+        return {nom:n, sea:d.sea, pres:d.pres, tauxPres:tauxPres, score:score, eq:d.eq};
+      }).sort(function(a,b){ return b.score - a.score; });
+      if (!arr.length) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3)">Aucune donn\u00e9e.</div>'; return; }
+      var medals = ['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'];
+      var h = '';
+      arr.forEach(function(r, i) {
+        var rang = i < 3 ? medals[i] : '<span style="display:inline-block;width:22px;text-align:center;font-weight:800;color:var(--txt3)">'+(i+1)+'</span>';
+        var bg = i === 0 ? 'linear-gradient(90deg,#fff8e6,transparent)' : i < 3 ? 'var(--bg)' : 'transparent';
+        h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:8px;background:'+bg+';border-bottom:1px solid var(--bdr)">'
+          + '<span style="font-size:16px;width:26px;text-align:center">'+rang+'</span>'
+          + '<span style="flex:1;font-size:13px;font-weight:'+(i<3?'800':'600')+'">'+r.nom+'</span>'
+          + '<span style="font-size:11px;color:var(--txt2);text-align:right">'+r.sea+' s\u00e9ances'+(r.tauxPres!=null?'<br>'+r.tauxPres+'% pr\u00e9sence':'')+'</span>'
+          + '</div>';
+      });
+      el.innerHTML = h;
+    });
+  });
+}
+function chargerProgression() {
+  var el = document.getElementById('st-progression');
+  if (!el) return;
+  sbGetCache('vbc_charges', 'order=semaine.asc&limit=1000', function(rows, ok) {
+    var data = rows || [];
+    if (_stFiltre !== 'all') data = data.filter(function(r){return r.equipe === _stFiltre;});
+    if (!data.length) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3)">Aucune charge saisie pour le moment.</div>'; return; }
+    // regrouper par joueur+exercice, calculer la progression premiere->derniere
+    var byPE = {};
+    data.forEach(function(r) {
+      if (r.charge == null) return;
+      var k = r.prenom + '|' + r.exercice;
+      if (!byPE[k]) byPE[k] = {nom:r.prenom, ex:r.exercice, first:null, last:null, fs:99, ls:-1};
+      if (r.semaine < byPE[k].fs) { byPE[k].fs = r.semaine; byPE[k].first = r.charge; }
+      if (r.semaine > byPE[k].ls) { byPE[k].ls = r.semaine; byPE[k].last = r.charge; }
+    });
+    var progs = Object.keys(byPE).map(function(k){
+      var d = byPE[k];
+      var gain = (d.last != null && d.first != null) ? d.last - d.first : 0;
+      var pct = d.first ? Math.round(gain/d.first*100) : 0;
+      return {nom:d.nom, ex:exoNom(d.ex), gain:gain, pct:pct, first:d.first, last:d.last};
+    }).filter(function(p){ return p.gain > 0; }).sort(function(a,b){ return b.pct - a.pct; });
+    if (!progs.length) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3)">Pas encore assez de donn\u00e9es pour mesurer une progression.</div>'; return; }
+    var h = '<div style="font-weight:800;font-size:12px;margin-bottom:6px">\uD83C\uDFC6 Top progressions</div>';
+    progs.slice(0, 8).forEach(function(p, i) {
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr)">'
+        + '<span style="font-size:13px;font-weight:700;flex:1">'+p.nom.split(' ')[0]+' <span style="font-weight:500;color:var(--txt2)">\u00b7 '+p.ex+'</span></span>'
+        + '<span style="font-size:12px;color:var(--txt2)">'+p.first+'\u2192'+p.last+'kg</span>'
+        + '<span style="font-size:12px;font-weight:800;color:var(--grn);min-width:44px;text-align:right">+'+p.pct+'%</span>'
+        + '</div>';
+    });
+    el.innerHTML = h;
+  });
+}
 function setStFiltre(f) {
   _stFiltre = f;
   var btns = document.querySelectorAll('.st-f');
@@ -2065,6 +2150,8 @@ function setStFiltre(f) {
   chargerStats();
 }
 function chargerStats() {
+  chargerClassement();
+  chargerProgression();
   sbGetCache('vbc_seances', 'order=created_at.asc&limit=500', function(seances, ok, cacheTs) {
     if (_stFiltre !== 'all') seances = (seances || []).filter(function(s){return s.equipe === _stFiltre;});
     var kpiNote = ok ? '' : noteCache((seances && seances.length) ? cacheTs : null);
@@ -2150,6 +2237,12 @@ function syncEffectif(cb) {
       } else if (r.active !== false) {
         S.players.push({id:'db-'+(r.id||Math.random().toString(36).slice(2)), name:r.name, eq:r.equipe||'f', poste:'', maillot:0, active:true, preset:false});
       }
+    });
+    // Purge des noms non-officiels créés par erreur (variantes orthographiques)
+    var officiels = {};
+    (rows||[]).forEach(function(r){ if(r.name) officiels[r.name]=true; });
+    S.players = (S.players||[]).filter(function(p){
+      return p.preset === true || officiels[p.name];
     });
     saveS();
     if (cb) cb();
