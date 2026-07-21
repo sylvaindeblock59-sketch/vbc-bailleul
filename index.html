@@ -299,7 +299,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v21</div>
+    <div class="hdr-pill">Été 2026 · v24</div>
   </div>
 </div>
 
@@ -1675,6 +1675,26 @@ valider = function(prog) {
   if (window._validLock) { toast('D\u00e9j\u00e0 en cours d\u2019envoi\u2026'); return; }
   window._validLock = true;
   setTimeout(function(){ window._validLock = false; }, 5000);
+  if (S.nom && S.eq) {
+    var wChk = prog==='A' ? S.week : S.cweek;
+    var tChk = prog==='A' ? S.stype : 'circuit';
+    var jChk = new Date().toLocaleDateString('fr-FR');
+    // Vérifie côté serveur : même type + même jour déjà enregistré ?
+    sbGet('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&semaine=eq.'+wChk+'&type_seance=eq.'+encodeURIComponent(tChk), function(rows) {
+      var dejaCeJour = (rows||[]).some(function(r){ return r.date_seance === jChk; });
+      if (dejaCeJour) {
+        var lbls = {salle:'Salle', ext:'Ext\u00e9rieur', circuit:'Circuit'};
+        toast('\u2713 S\u00e9ance '+(lbls[tChk]||tChk)+' d\u00e9j\u00e0 valid\u00e9e aujourd\u2019hui');
+        window._validLock = false;
+      } else {
+        _finaliserValidation(prog);
+      }
+    });
+    return;
+  }
+  _finaliserValidation(prog);
+};
+function _finaliserValidation(prog) {
   _origValider(prog);
   if (S.nom && S.eq) {
     var w = prog==='A' ? S.week : S.cweek;
@@ -1723,6 +1743,22 @@ function loadMesSeances() {
       saveS();
       renAccueil();
       toast('Historique synchronis\u00e9 \u2713');
+    }
+  });
+  // Restaurer les charges (poids) saisies, perdues du cache local
+  sbGetCache('vbc_charges', 'prenom=eq.'+encodeURIComponent(S.nom)+'&order=semaine.asc', function(chs, ok2) {
+    if (!chs || !chs.length) return;
+    S.charges = S.charges || {};
+    var aj = 0;
+    chs.forEach(function(c) {
+      if (!c.semaine || !c.exercice || c.charge == null) return;
+      var key = 'S' + c.semaine + '-' + c.exercice;
+      if (S.charges[key] == null || S.charges[key] === '') { S.charges[key] = c.charge; aj++; }
+    });
+    if (aj > 0) {
+      saveS();
+      _chgHist = null; // forcer le rechargement des rappels "dernière fois"
+      if (S.prog === 'A') renProgA();
     }
   });
 }
