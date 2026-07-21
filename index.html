@@ -299,7 +299,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v24</div>
+    <div class="hdr-pill">Été 2026 · v25</div>
   </div>
 </div>
 
@@ -748,6 +748,12 @@ window.onerror = function(msg, url, line) {
       <div id="pr-resume" style="margin-top:12px"></div>
     </div>
     <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>État des données</div>
+      <div class="info-box">Qui a envoyé quoi, et qui n'a rien synchronisé récemment. Vérifiable depuis ton téléphone.</div>
+      <div id="ed-liste"></div>
+      <button onclick="chargerEtatData()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
+    </div>
+    <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Gérer l'effectif</div>
       <div class="info-box">Ajoute ou retire un joueur — tous les téléphones se mettent à jour automatiquement.</div>
       <span class="label">Ajouter : prénom (et nom)</span>
@@ -980,21 +986,24 @@ function queueLocale(table, data) {
 }
 
 function viderFileAttente() {
-  try {
-    var q = JSON.parse(localStorage.getItem('sb-queue') || '[]');
-    if (!q.length) return;
-    var restant = [];
-    for (var i = 0; i < q.length; i++) {
-      (function(item) {
-        sbPost(item.table, item.data, function(ok) {
-          if (!ok) restant.push(item);
-          if (restant.length === 0 && q.length > 0) {
-            localStorage.setItem('sb-queue', JSON.stringify(restant));
-          }
-        });
-      })(q[i]);
-    }
-  } catch(e) {}
+  var q;
+  try { q = JSON.parse(localStorage.getItem('sb-queue') || '[]'); } catch(e) { return; }
+  if (!q.length) return;
+  var enCours = q.slice();
+  var traites = 0, aRetirer = [];
+  enCours.forEach(function(item, idx) {
+    sbPost(item.table, item.data, function(ok) {
+      traites++;
+      if (ok) aRetirer.push(idx);
+      if (traites === enCours.length) {
+        try {
+          var actuel = JSON.parse(localStorage.getItem('sb-queue') || '[]');
+          var restant = actuel.filter(function(it, i){ return aRetirer.indexOf(i) < 0; });
+          localStorage.setItem('sb-queue', JSON.stringify(restant));
+        } catch(e) {}
+      }
+    });
+  });
 }
 
 
@@ -1345,9 +1354,22 @@ function chargePrec(id, w) {
 }
 function setCharge(key, val) {
   S.charges = S.charges || {};
-  if (val === '' || val == null) delete S.charges[key];
-  else S.charges[key] = val;
+  if (val === '' || val == null) { delete S.charges[key]; saveS(); return; }
+  S.charges[key] = val;
   saveS();
+  // BLINDAGE : envoi immédiat au serveur, sans attendre la validation de séance
+  var num = parseFloat(val);
+  if (isNaN(num) || !S.nom || !S.eq) return;
+  var m = key.match(/^S(\d+)-(.+)$/);
+  if (!m) return;
+  var sem = parseInt(m[1]), exId = m[2];
+  var all = [].concat(SALLE_P1, SALLE_P2, EXT_P1, EXT_P2);
+  var presc = '';
+  for (var i = 0; i < all.length; i++) { if (all[i].id === exId) { var L = getLoad(all[i]); presc = S.eq==='m'?L.m:L.f; break; } }
+  var charge = {prenom:S.nom, equipe:S.eq, semaine:sem, exercice:exId, charge:num, prescrit:String(presc||'')};
+  sbPost('vbc_charges', charge, function(ok) {
+    if (!ok) queueLocale('vbc_charges', charge);
+  });
 }
 function chargeHTML(e, w) {
   S.charges = S.charges || {};
@@ -1766,7 +1788,9 @@ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 loadS();
 syncEffectif(function(){restoreProfil();remplirNomsProfil();});
 restoreProfil();
+viderFileAttente();
 loadMesSeances();
+setTimeout(viderFileAttente, 3000);
 restoreRM();
 renAccueil();
 renVideos();
@@ -1887,6 +1911,7 @@ function renCoachDash() {
   chargerBienEtre();
   remplirTstNoms();
   renEffectif();
+  chargerEtatData();
   var all = S.players || [];
   var tot = document.getElementById('c-tot');
   var done = document.getElementById('c-done');
@@ -2308,6 +2333,62 @@ function toggleJoueur(nom) {
   sbInsert('vbc_players', {id:'chg-'+Date.now(), name:p.name, equipe:p.eq, active:p.active});
   toast(p.name.split(' ')[0] + (p.active ? ' r\u00e9int\u00e9gr\u00e9' : ' retir\u00e9') + ' \u2713');
   renEffectif(); renPrListe();
+}
+function chargerEtatData() {
+  var el = document.getElementById('ed-liste');
+  if (!el) return;
+  el.innerHTML = '<div style="font-size:12px;color:var(--txt3)">Chargement\u2026</div>';
+  sbGet('vbc_seances', 'order=created_at.desc&limit=800', function(seances) {
+    sbGet('vbc_charges', 'limit=1000', function(charges) {
+      var stat = {};
+      (S.players || []).forEach(function(p) {
+        if (p.active === false) return;
+        stat[p.name] = {eq:p.eq, sea:0, chg:0, last:null};
+      });
+      (seances || []).forEach(function(s) {
+        if (!stat[s.prenom]) stat[s.prenom] = {eq:s.equipe, sea:0, chg:0, last:null};
+        stat[s.prenom].sea++;
+        var d = s.created_at || s.date_seance;
+        if (d && (!stat[s.prenom].last || d > stat[s.prenom].last)) stat[s.prenom].last = d;
+      });
+      (charges || []).forEach(function(c) {
+        if (!stat[c.prenom]) stat[c.prenom] = {eq:c.equipe, sea:0, chg:0, last:null};
+        stat[c.prenom].chg++;
+      });
+      var now = Date.now();
+      var arr = Object.keys(stat).map(function(n){
+        var s = stat[n];
+        var jours = s.last ? Math.floor((now - new Date(s.last).getTime())/86400000) : null;
+        return {nom:n, eq:s.eq, sea:s.sea, chg:s.chg, jours:jours};
+      });
+      // Tri : alertes d'abord (rien envoyé, ou inactif depuis longtemps)
+      arr.sort(function(a,b){
+        var pa = a.sea===0?0 : a.jours==null?1 : a.jours>=10?1 : 2;
+        var pb = b.sea===0?0 : b.jours==null?1 : b.jours>=10?1 : 2;
+        if (pa !== pb) return pa - pb;
+        return (b.jours||0) - (a.jours||0);
+      });
+      var h = '';
+      ['f','m'].forEach(function(eq){
+        var grp = arr.filter(function(x){return x.eq===eq;});
+        if (!grp.length) return;
+        h += '<div style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);margin:10px 0 4px">'+(eq==='f'?'\u2640 N2F':'\u2642 N3M')+'</div>';
+        grp.forEach(function(r){
+          var alerte = r.sea===0 || r.jours==null || r.jours>=10;
+          var dot = r.sea===0 ? '\uD83D\uDD34' : (r.jours>=10 ? '\uD83D\uDFE1' : '\uD83D\uDFE2');
+          var last = r.jours==null ? 'jamais' : r.jours===0 ? "aujourd'hui" : r.jours===1 ? 'hier' : 'il y a '+r.jours+' j';
+          h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr)'+(alerte?';background:linear-gradient(90deg,#fdf3ea,transparent)':'')+'">'
+            + '<span style="font-size:13px">'+dot+'</span>'
+            + '<span style="flex:1;font-size:13px;font-weight:'+(alerte?'800':'600')+'">'+r.nom+'</span>'
+            + '<span style="font-size:11px;color:var(--txt2);text-align:right">'+r.sea+' s\u00e9a \u00b7 '+r.chg+' charges<br>'+last+'</span>'
+            + '</div>';
+        });
+      });
+      var alertes = arr.filter(function(x){return x.sea===0 || x.jours==null || x.jours>=10;}).length;
+      if (alertes > 0) h = '<div style="background:#fdecea;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;color:var(--acc);margin-bottom:8px">\u26A0 '+alertes+' \u00e0 surveiller (rien envoy\u00e9 ou inactif +10j)</div>' + h;
+      el.innerHTML = h;
+    });
+  });
 }
 function renEffectif() {
   var el = document.getElementById('ef-liste');
