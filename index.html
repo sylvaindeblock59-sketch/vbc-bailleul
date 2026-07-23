@@ -163,6 +163,10 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 .ps-btn{padding:16px 10px;border-radius:var(--r);border:2px solid var(--bdr);background:var(--card);cursor:pointer;text-align:center;transition:all .2s}
 .ps-btn.on.A{border-color:var(--grn);background:var(--grn-bg)}
 .ps-btn.on.B{border-color:var(--org);background:var(--org-bg)}
+.ps-btn.on.C{border-color:#2e6da4;background:#e8f0f8}
+.prog-switch{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ps-icon{font-size:26px;line-height:1.1}
+.ps-title{font-size:14px}
 .ps-icon{font-size:28px;margin-bottom:6px}
 .ps-title{font-size:13px;font-weight:700;color:var(--txt)}
 .ps-sub{font-size:11px;color:var(--txt2);margin-top:2px}
@@ -299,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v27</div>
+    <div class="hdr-pill">Été 2026 · v29</div>
   </div>
 </div>
 
@@ -466,19 +470,31 @@ window.onerror = function(msg, url, line) {
 ══════════════════════════════════ -->
 <div id="pg-seance" class="page">
 
-  <!-- Sélecteur programme A / B -->
+  <!-- Sélecteur : 4 types de séance -->
   <div class="prog-switch">
-    <div class="ps-btn on A" id="ps-A" onclick="setProg('A')">
-      <div class="ps-icon">💪</div>
-      <div class="ps-title">Programme A</div>
-      <div class="ps-sub">Salle · Extérieur</div>
+    <div class="ps-btn on A" id="ps-salle" onclick="choisirSeance('salle')">
+      <div class="ps-icon">🏋️</div>
+      <div class="ps-title">Salle</div>
+      <div class="ps-sub">Musculation</div>
       <div class="ps-badge badge-obli">Obligatoire</div>
     </div>
-    <div class="ps-btn B" id="ps-B" onclick="setProg('B')">
+    <div class="ps-btn A" id="ps-ext" onclick="choisirSeance('ext')">
+      <div class="ps-icon">🏃</div>
+      <div class="ps-title">Extérieur</div>
+      <div class="ps-sub">Cardio · Terrain</div>
+      <div class="ps-badge badge-obli">Obligatoire</div>
+    </div>
+    <div class="ps-btn B" id="ps-circuit" onclick="choisirSeance('circuit')">
       <div class="ps-icon">⚡</div>
       <div class="ps-title">Circuit Force</div>
-      <div class="ps-sub">Extra-Time · A/B/C</div>
-      <div class="ps-badge badge-opti">Bonus optionnel</div>
+      <div class="ps-sub">A · B · C</div>
+      <div class="ps-badge badge-opti">Bonus</div>
+    </div>
+    <div class="ps-btn C" id="ps-extra" onclick="choisirSeance('extra')">
+      <div class="ps-icon">🚴</div>
+      <div class="ps-title">Extra Time</div>
+      <div class="ps-sub">Activité libre</div>
+      <div class="ps-badge badge-opti">Bonus</div>
     </div>
   </div>
 
@@ -499,7 +515,7 @@ window.onerror = function(msg, url, line) {
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-size:12px;font-weight:700;color:var(--txt2)">\uD83D\uDCC5 Date :</span>
+        <span style="font-size:12px;font-weight:700;color:var(--txt2)">📅 Date :</span>
         <input type="date" id="s-date" style="flex:1;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;font-weight:600;background:var(--card)">
       </div>
       <div id="s-info-box" style="margin-bottom:10px"></div>
@@ -578,6 +594,42 @@ window.onerror = function(msg, url, line) {
       </div>
       <button class="btn btn-org" onclick="valider('B')">Valider le circuit ✓</button>
       <div id="val-B" style="display:none;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- EXTRA TIME : activité libre -->
+  <div id="prog-C" style="display:none">
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>Extra Time — activité libre</div>
+      <div class="info-box">Tu as fait du sport en plus du programme ? Note-le ici, ton coach le verra 💪</div>
+      <span class="label">Type d'activité</span>
+      <select id="xt-type" style="margin-bottom:10px">
+        <option value="">-- Choisis --</option>
+        <option value="Beach volley">🏐 Beach volley</option>
+        <option value="Vélo">🚴 Vélo</option>
+        <option value="Course à pied">🏃 Course à pied</option>
+        <option value="Randonnée">🥾 Randonnée</option>
+        <option value="Natation">🏊 Natation</option>
+        <option value="Sport collectif">⚽ Autre sport co</option>
+        <option value="Renfo / Gainage">🧘 Renfo · Gainage</option>
+        <option value="Autre">✨ Autre</option>
+      </select>
+      <span class="label">Précision (optionnel)</span>
+      <input type="text" id="xt-note" placeholder="Ex : 30 km, sortie tranquille..." style="margin-bottom:10px">
+      <span class="label">Durée (minutes)</span>
+      <input type="number" inputmode="numeric" id="xt-duree" placeholder="Ex : 45" style="margin-bottom:10px">
+      <span class="label">Date</span>
+      <input type="date" id="xt-date" style="margin-bottom:12px">
+      <span class="label">Ressenti</span>
+      <div style="display:flex;gap:6px;margin-bottom:12px" id="feels-C">
+        <button onclick="setXtFeel(1)" class="feel xt-f" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--bdr);font-size:18px;cursor:pointer;background:var(--card)">😫</button>
+        <button onclick="setXtFeel(2)" class="feel xt-f" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--bdr);font-size:18px;cursor:pointer;background:var(--card)">😕</button>
+        <button onclick="setXtFeel(3)" class="feel xt-f" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--bdr);font-size:18px;cursor:pointer;background:var(--card)">🙂</button>
+        <button onclick="setXtFeel(4)" class="feel xt-f" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--bdr);font-size:18px;cursor:pointer;background:var(--card)">😃</button>
+        <button onclick="setXtFeel(5)" class="feel xt-f" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--bdr);font-size:18px;cursor:pointer;background:var(--card)">🔥</button>
+      </div>
+      <button class="btn btn-grn" onclick="validerExtra()" style="margin-bottom:0">Envoyer mon activité ✓</button>
+      <div id="val-C" style="display:none;margin-top:8px"></div>
     </div>
   </div>
 </div>
@@ -1408,12 +1460,67 @@ function loadHTML(ex){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // SÉANCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+function choisirSeance(t){
+  var ids={salle:'ps-salle',ext:'ps-ext',circuit:'ps-circuit',extra:'ps-extra'};
+  Object.keys(ids).forEach(function(k){
+    var el=document.getElementById(ids[k]);
+    if(el)el.classList.toggle('on',k===t);
+  });
+  document.getElementById('prog-A').style.display=(t==='salle'||t==='ext')?'':'none';
+  document.getElementById('prog-B').style.display=(t==='circuit')?'':'none';
+  document.getElementById('prog-C').style.display=(t==='extra')?'':'none';
+  if(t==='salle'||t==='ext'){
+    S.prog='A';S.stype=t;saveS();
+    var sd=document.getElementById('s-date');
+    if(sd&&!sd.value)sd.value=new Date().toISOString().slice(0,10);
+    renProgA();
+    var bA=document.querySelector("#prog-A .btn-grn");
+    if(bA)bA.textContent=(t==='salle'?'\u2713 Valider ma s\u00e9ance SALLE':'\u2713 Valider ma s\u00e9ance EXT\u00c9RIEUR');
+  } else if(t==='circuit'){
+    S.prog='B';saveS();renProgB();
+  } else {
+    S.prog='C';saveS();
+    var xd=document.getElementById('xt-date');
+    if(xd&&!xd.value)xd.value=new Date().toISOString().slice(0,10);
+  }
+}
+var _xtFeel=3;
+function setXtFeel(n){
+  _xtFeel=n;
+  var bs=document.querySelectorAll('.xt-f');
+  for(var i=0;i<bs.length;i++){
+    bs[i].style.background=(i+1===n)?'var(--pri)':'var(--card)';
+    bs[i].style.borderColor=(i+1===n)?'var(--pri)':'var(--bdr)';
+  }
+}
+function validerExtra(){
+  if(!S.nom||!S.eq){toast('Choisis ton nom dans Profil');return;}
+  var typ=document.getElementById('xt-type').value;
+  if(!typ){toast('Choisis une activit\u00e9');return;}
+  var dur=parseInt(document.getElementById('xt-duree').value)||0;
+  var prec=(document.getElementById('xt-note').value||'').trim();
+  var xd=document.getElementById('xt-date');
+  var dte;
+  if(xd&&xd.value){var p=xd.value.split('-');dte=p[2]+'/'+p[1]+'/'+p[0];}
+  else dte=new Date().toLocaleDateString('fr-FR');
+  var w=S.week||1;
+  var note=typ+(dur?' \u00b7 '+dur+' min':'')+(prec?' \u00b7 '+prec:'');
+  var data={prenom:S.nom,equipe:S.eq,semaine:w,type_seance:'extra',feeling:_xtFeel,note:note,date_seance:dte};
+  sbPost('vbc_seances',data,function(ok){
+    if(!ok)queueLocale('vbc_seances',data);
+  });
+  S.done['S'+w+'-extra']={feel:_xtFeel,date:dte,prog:'C'};
+  saveS();renAccueil();
+  var v=document.getElementById('val-C');
+  v.style.display='block';
+  v.innerHTML='<div class="ok-box"><strong>Activit\u00e9 envoy\u00e9e \u2713</strong><br>'+note+' \u2014 le '+dte+'</div>';
+  toast('Extra Time enregistr\u00e9 \u2713');
+  document.getElementById('xt-type').value='';
+  document.getElementById('xt-duree').value='';
+  document.getElementById('xt-note').value='';
+}
 function setProg(p){
   S.prog=p;saveS();
-  document.getElementById('ps-A').classList.toggle('on',p==='A');
-  document.getElementById('ps-A').classList.toggle('A',p==='A');
-  document.getElementById('ps-B').classList.toggle('on',p==='B');
-  document.getElementById('ps-B').classList.toggle('B',p==='B');
   document.getElementById('prog-A').style.display=p==='A'?'':'none';
   document.getElementById('prog-B').style.display=p==='B'?'':'none';
   if(p==='A')renProgA();else renProgB();
@@ -1601,7 +1708,7 @@ function renAccueil(){
   document.getElementById('h-bar').style.width=pct+'%';
   [[1,2,3,4],[5,6,7,8]].forEach((wks,pi)=>{
     document.getElementById('h-dots'+(pi+1)).innerHTML=wks.map(w=>{
-      const ok=Object.keys(S.done).some(k=>k.startsWith('S'+w));
+      const ok=Object.keys(S.done).some(k=>k.startsWith('S'+w+'-')&&!k.endsWith('-extra'));
       return`<div class="wk p${pi+1}${S.week===w?' on':''} ${ok?'done':''}" onclick="S.week=${w};S.cweek=${w};saveS();go('seance')">
         S${w}<div class="wk-sub">${ok?'\u2713':THEMES[w-1].slice(0,4)}</div>
       </div>`;
@@ -1817,10 +1924,8 @@ setTimeout(viderFileAttente, 3000);
 restoreRM();
 renAccueil();
 renVideos();
-setType(S.stype||'salle');
+choisirSeance(S.prog==='B'?'circuit':(S.prog==='C'?'extra':(S.stype||'salle')));
 // Restaurer le prog switcher
-document.getElementById('ps-A').classList.toggle('on',S.prog==='A');document.getElementById('ps-A').classList.toggle('A',S.prog==='A');
-document.getElementById('ps-B').classList.toggle('on',S.prog==='B');document.getElementById('ps-B').classList.toggle('B',S.prog==='B');
 document.getElementById('prog-A').style.display=S.prog==='A'?'':'none';
 document.getElementById('prog-B').style.display=S.prog==='B'?'':'none';
 
@@ -2067,7 +2172,8 @@ function chargerSuivi() {
     }
     var byP = {};
     seances.forEach(function(s) {
-      if (!byP[s.prenom]) byP[s.prenom] = {eq:s.equipe, sem:[], retro:[]};
+      if (!byP[s.prenom]) byP[s.prenom] = {eq:s.equipe, sem:[], retro:[], extra:0};
+      if (s.type_seance === 'extra') { byP[s.prenom].extra++; return; }
       byP[s.prenom].sem.push(s.semaine);
       if (estRetro(s.semaine, s.date_seance)) byP[s.prenom].retro.push(s.semaine);
     });
@@ -2084,10 +2190,10 @@ function chargerSuivi() {
           if (d.retro.indexOf(w) >= 0) return '<td style="text-align:center;color:#d4691e;font-weight:700" title="Saisie a posteriori">\u2713\u1D57</td>';
           return '<td style="text-align:center;color:var(--grn);font-weight:700">\u2713</td>';
         }).join('')
-        +'<td style="text-align:center;font-weight:700;color:var(--grn)">'+d.sem.length+'</td></tr>';
+        +'<td style="text-align:center;font-weight:700;color:var(--grn)">'+d.sem.length+(d.extra?'<span style="color:#2e6da4;font-size:10px" title="Extra Time"> +'+d.extra+'</span>':'')+'</td></tr>';
     });
     h += '</tbody></table></div>';
-    h += '<div style="font-size:10px;color:var(--txt3);margin-top:6px"><span style="color:var(--grn);font-weight:700">\u2713</span> valid\u00e9e dans la semaine \u00b7 <span style="color:#d4691e;font-weight:700">\u2713\u1D57</span> saisie a posteriori</div>';
+    h += '<div style="font-size:10px;color:var(--txt3);margin-top:6px"><span style="color:var(--grn);font-weight:700">\u2713</span> valid\u00e9e dans la semaine \u00b7 <span style="color:#d4691e;font-weight:700">\u2713\u1D57</span> saisie a posteriori \u00b7 <span style=\"color:#2e6da4;font-weight:700\">+N</span> Extra Time (bonus)</div>';
     h += '<button onclick="chargerSuivi()" class="btn btn-ghost" style="margin-top:8px;padding:7px;font-size:11px">\u21BB Actualiser</button>';
     el.innerHTML = note + h;
   });
@@ -2611,14 +2717,14 @@ function ouvrirFicheJoueuse(nom) {
       +'<div style="font-size:12px;color:var(--txt2)">'+total+' séances validées</div>'
       +'</div>';
     html += '<div style="height:8px;background:var(--bdr);border-radius:4px;overflow:hidden;margin-bottom:16px"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div>';
-    var icons = {salle:'&#127960;', ext:'&#127823;', circuit:'&#9889;'};
-    var labels = {salle:'Salle', ext:'Extérieur', circuit:'Circuit'};
+    var icons = {salle:'&#127947;', ext:'&#127939;', circuit:'&#9889;', extra:'&#128692;'};
+    var labels = {salle:'Salle', ext:'Extérieur', circuit:'Circuit', extra:'Extra Time'};
     var W = [1,2,3,4,5,6,7,8];
     W.forEach(function(w) {
       var done = seances.filter(function(s){return s.semaine===w;});
       html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr)">'
         +'<div style="width:36px;height:36px;border-radius:8px;background:'+(done.length?'var(--grn-bg)':'var(--bg)')+';border:1.5px solid '+(done.length?'var(--grn)':'var(--bdr)')+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:'+(done.length?'var(--grn)':'var(--txt3)')+';flex-shrink:0">S'+w+'</div>'
-        +'<div style="flex:1">'+(done.length?done.map(function(s){return '<div style="font-size:12px;font-weight:700">'+(icons[s.type_seance]||'')+' '+(labels[s.type_seance]||s.type_seance)+'<span style="font-size:10px;color:var(--txt2);margin-left:6px">'+s.date_seance+'</span>'+(estRetro(s.semaine,s.date_seance)?'<span style="font-size:9px;font-weight:800;color:#d4691e;background:#fdf3ea;border-radius:6px;padding:1px 6px;margin-left:6px">A POSTERIORI</span>':'')+'</div>';}).join(''):'<div style="font-size:12px;color:var(--txt3)">Non réalisée</div>')+'</div>'
+        +'<div style="flex:1">'+(done.length?done.map(function(s){return '<div style="font-size:12px;font-weight:700">'+(icons[s.type_seance]||'')+' '+(labels[s.type_seance]||s.type_seance)+'<span style="font-size:10px;color:var(--txt2);margin-left:6px">'+s.date_seance+'</span>'+(estRetro(s.semaine,s.date_seance)?'<span style="font-size:9px;font-weight:800;color:#d4691e;background:#fdf3ea;border-radius:6px;padding:1px 6px;margin-left:6px">A POSTERIORI</span>':'')+(s.note&&s.note!=='Saisie coach'?'<div style="font-size:11px;color:var(--txt2);font-weight:500;margin-top:1px">'+s.note+'</div>':'')+'</div>';}).join(''):'<div style="font-size:12px;color:var(--txt3)">Non réalisée</div>')+'</div>'
         +'</div>';
     });
     sbGetCache('vbc_presences', fNom, function(prs) {
