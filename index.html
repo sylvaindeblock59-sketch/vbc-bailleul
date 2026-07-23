@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v31</div>
+    <div class="hdr-pill">Été 2026 · v33</div>
   </div>
 </div>
 
@@ -330,6 +330,10 @@ window.onerror = function(msg, url, line) {
     <div class="ci-row"><span class="ci-lbl">🔋 Fatigue <small id="ci-v-fat">3</small></span><input type="range" min="1" max="5" value="3" id="ci-fat" oninput="document.getElementById('ci-v-fat').textContent=this.value"><div class="ci-ends"><span>Fraîche</span><span>Épuisée</span></div></div>
     <div class="ci-row"><span class="ci-lbl">😊 Humeur <small id="ci-v-hum">3</small></span><input type="range" min="1" max="5" value="3" id="ci-hum" oninput="document.getElementById('ci-v-hum').textContent=this.value"><div class="ci-ends"><span>Bof</span><span>Au top</span></div></div>
     <button class="btn btn-grn" onclick="validerCheckin()" style="margin-bottom:0">Envoyer mon check-in ✓</button>
+  </div>
+  <div class="card" id="mp-card" style="display:none">
+    <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Ma progression</div>
+    <div id="mp-body"></div>
   </div>
   <div class="card" id="ci-done" style="display:none">
     <div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:800;font-size:13px">Check-in du jour envoyé</div><div style="font-size:11px;color:var(--txt2)">À demain !</div></div></div>
@@ -1703,6 +1707,7 @@ function closeModal(){document.getElementById('modal-bg').classList.remove('vis'
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function renAccueil(){
   renCheckin();
+  renMaProgression();
   const tot=Object.keys(S.done).length;const pct=Math.round(tot/16*100);
   document.getElementById('h-done').textContent=tot;
   document.getElementById('h-pct').textContent=pct+'%';
@@ -2649,6 +2654,49 @@ function chargerPrResume() {
     el.innerHTML = h;
   });
 }
+function renMaProgression() {
+  var card = document.getElementById('mp-card');
+  var body = document.getElementById('mp-body');
+  if (!card || !body) return;
+  if (!S.nom) { card.style.display='none'; return; }
+  var faites = Object.keys(S.done||{}).filter(function(k){ return !k.endsWith('-extra'); });
+  if (!faites.length) {
+    card.style.display='block';
+    body.innerHTML = '<div style="font-size:13px;line-height:1.5">Tu n\u2019as pas encore valid\u00e9 de s\u00e9ance.<br><strong>Commence par la Semaine 1</strong> \u2014 c\u2019est ta r\u00e9f\u00e9rence de d\u00e9part, quelle que soit la date \uD83D\uDCAA</div>'
+      + '<button class="btn btn-grn" style="margin-top:10px;margin-bottom:0" onclick="S.week=1;saveS();go(\'seance\')">Commencer ma Semaine 1</button>';
+    return;
+  }
+  // semaine max atteinte + s\u00e9ances restantes de cette semaine
+  var maxW = 1, parSem = {};
+  faites.forEach(function(k){
+    var m = k.match(/^S(\d+)-(.+)$/); if(!m) return;
+    var w = parseInt(m[1]);
+    if (w > maxW) maxW = w;
+    if(!parSem[w]) parSem[w] = [];
+    parSem[w].push(m[2]);
+  });
+  var faitsW = parSem[maxW] || [];
+  var manquants = ['salle','ext','circuit'].filter(function(t){ return faitsW.indexOf(t) < 0; });
+  var lbl = {salle:'\uD83C\uDFCB S\u00e9ance Salle', ext:'\uD83C\uDFC3 S\u00e9ance Ext\u00e9rieur', circuit:'\u26A1 Circuit Force'};
+  var totalOblig = faites.length;
+  var pct = Math.min(100, Math.round(totalOblig / 16 * 100));
+  var h = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
+    + '<div style="width:52px;height:52px;border-radius:12px;background:var(--grn-bg);border:2px solid var(--grn);display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="text-align:center"><div style="font-size:9px;font-weight:700;color:var(--txt2);line-height:1">SEM.</div><div style="font-size:18px;font-weight:900;color:var(--grn);line-height:1.1">'+maxW+'</div></div></div>'
+    + '<div style="flex:1"><div style="font-size:13px;font-weight:800">Tu es en Semaine '+maxW+' de ton parcours</div>'
+    + '<div style="font-size:11px;color:var(--txt2)">'+totalOblig+' s\u00e9ance'+(totalOblig>1?'s':'')+' valid\u00e9e'+(totalOblig>1?'s':'')+' \u00b7 '+pct+'% du programme</div></div></div>'
+    + '<div style="height:7px;background:var(--bdr);border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:'+pct+'%;background:var(--grn);border-radius:4px"></div></div>';
+  if (manquants.length) {
+    h += '<div style="font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">\u00c0 faire cette semaine</div>';
+    manquants.forEach(function(t){
+      h += '<button onclick="S.week='+maxW+';saveS();go(\'seance\');setTimeout(function(){choisirSeance(\''+t+'\')},120)" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 10px;margin-bottom:5px;border-radius:8px;border:1.5px dashed var(--bdr);background:var(--bg);cursor:pointer;font-size:13px;font-weight:700;color:var(--txt)">'+lbl[t]+'</button>';
+    });
+  } else {
+    h += '<div style="background:var(--grn-bg);border-radius:8px;padding:10px;font-size:12px;font-weight:700;color:var(--grn);margin-bottom:8px">\uD83C\uDF89 Semaine '+maxW+' compl\u00e8te ! Passe \u00e0 la Semaine '+(maxW+1)+'</div>'
+      + '<button class="btn btn-grn" style="margin-bottom:0" onclick="S.week='+Math.min(maxW+1,8)+';saveS();go(\'seance\')">Attaquer la Semaine '+(maxW+1)+'</button>';
+  }
+  card.style.display='block';
+  body.innerHTML = h;
+}
 function renCheckin() {
   var card = document.getElementById('ci-card');
   var done = document.getElementById('ci-done');
@@ -2762,6 +2810,50 @@ function ouvrirFicheJoueuse(nom) {
     html += '<div style="height:8px;background:var(--bdr);border-radius:4px;overflow:hidden;margin-bottom:16px"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div>';
     var icons = {salle:'&#127947;', ext:'&#127939;', circuit:'&#9889;', extra:'&#128692;'};
     var labels = {salle:'Salle', ext:'Extérieur', circuit:'Circuit', extra:'Extra Time'};
+
+    // ══ RADAR : profil d'entraînement ══
+    var cnt = {salle:0, ext:0, circuit:0, extra:0};
+    seances.forEach(function(s){ if(cnt[s.type_seance]!=null) cnt[s.type_seance]++; });
+    var axes = [
+      {k:'salle',   lbl:'Salle',   col:'#1d3a5f'},
+      {k:'ext',     lbl:'Extér.',  col:'#2e6da4'},
+      {k:'circuit', lbl:'Circuit', col:'#d4691e'},
+      {k:'extra',   lbl:'Extra',   col:'#2e8b57'}
+    ];
+    var maxV = Math.max(1, cnt.salle, cnt.ext, cnt.circuit, cnt.extra);
+    var CX=110, CY=105, R=72;
+    function pt(i, ratio){
+      var a = (Math.PI*2*i/4) - Math.PI/2;
+      return [CX + Math.cos(a)*R*ratio, CY + Math.sin(a)*R*ratio];
+    }
+    var svg = '<svg viewBox="0 0 220 210" style="width:100%;max-width:250px;display:block;margin:0 auto">';
+    [0.25,0.5,0.75,1].forEach(function(g){
+      var p = [0,1,2,3].map(function(i){ var c=pt(i,g); return c[0].toFixed(1)+','+c[1].toFixed(1); }).join(' ');
+      svg += '<polygon points="'+p+'" fill="none" stroke="#e2e8f0" stroke-width="1"/>';
+    });
+    [0,1,2,3].forEach(function(i){
+      var c = pt(i,1);
+      svg += '<line x1="'+CX+'" y1="'+CY+'" x2="'+c[0].toFixed(1)+'" y2="'+c[1].toFixed(1)+'" stroke="#e2e8f0" stroke-width="1"/>';
+    });
+    var dataPts = axes.map(function(a,i){ var c=pt(i, cnt[a.k]/maxV); return c[0].toFixed(1)+','+c[1].toFixed(1); }).join(' ');
+    svg += '<polygon points="'+dataPts+'" fill="rgba(46,109,164,.28)" stroke="#2e6da4" stroke-width="2.5" stroke-linejoin="round"/>';
+    axes.forEach(function(a,i){
+      var c = pt(i, cnt[a.k]/maxV);
+      svg += '<circle cx="'+c[0].toFixed(1)+'" cy="'+c[1].toFixed(1)+'" r="4" fill="'+a.col+'"/>';
+      var l = pt(i, 1.28);
+      svg += '<text x="'+l[0].toFixed(1)+'" y="'+(l[1]+4).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+a.col+'">'+a.lbl+'</text>';
+      var v = pt(i, 1.28);
+      svg += '<text x="'+v[0].toFixed(1)+'" y="'+(v[1]+16).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#64748b">'+cnt[a.k]+'</text>';
+    });
+    svg += '</svg>';
+    html += '<div style="font-weight:800;font-size:13px;margin:6px 0 2px">\uD83D\uDCCA Profil d\u2019entra\u00eenement</div>' + svg;
+    var oblig = cnt.salle + cnt.ext + cnt.circuit;
+    html += '<div style="display:flex;gap:6px;margin:10px 0 16px">'
+      + '<div style="flex:1;background:var(--grn-bg);border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+oblig+'</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">Compt\u00e9es pr\u00e9pa</div></div>'
+      + '<div style="flex:1;background:#e8f0f8;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:900;color:#2e6da4">'+cnt.extra+'</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">Extra bonus</div></div>'
+      + '</div>';
+    html += '<div style="font-weight:800;font-size:13px;margin:0 0 6px">\uD83D\uDCC5 D\u00e9tail par semaine</div>';
+
     var W = [1,2,3,4,5,6,7,8];
     W.forEach(function(w) {
       var done = seances.filter(function(s){return s.semaine===w;});
