@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v30</div>
+    <div class="hdr-pill">Été 2026 · v31</div>
   </div>
 </div>
 
@@ -1286,7 +1286,8 @@ function go(id){
 // PROFIL
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 function saveProfil(){
-  setTimeout(loadMesSeances, 400);
+  setTimeout(sauvetageDonneesLocales, 400);
+  setTimeout(loadMesSeances, 1600);
   S.eq=document.getElementById('p-eq').value;
   S.nom=document.getElementById('p-nom').value;
   S.poste=document.getElementById('p-pos').value;
@@ -1878,6 +1879,47 @@ function _finaliserValidation(prog) {
   }
 };
 
+function sauvetageDonneesLocales() {
+  if (!S.nom || !S.eq) return;
+  var deja = false;
+  try { deja = localStorage.getItem('vbc-sauvetage-v30') === S.nom; } catch(e) {}
+  if (deja) return;
+  var envoyes = 0;
+
+  // 1) Les 1RM stock\u00e9s localement
+  Object.keys(S.rm || {}).forEach(function(ex) {
+    var val = parseFloat(S.rm[ex]);
+    if (isNaN(val)) return;
+    var d = {prenom:S.nom, equipe:S.eq, semaine:0, exercice:'RM-'+ex, charge:val, prescrit:''};
+    sbPost('vbc_charges', d, function(ok){ if(!ok) queueLocale('vbc_charges', d); });
+    envoyes++;
+  });
+
+  // 2) Les charges saisies localement (jamais parties \u00e0 cause de la table cass\u00e9e)
+  Object.keys(S.charges || {}).forEach(function(k) {
+    var val = parseFloat(S.charges[k]);
+    if (isNaN(val)) return;
+    var m = k.match(/^S(\d+)-(.+)$/);
+    if (!m) return;
+    var d = {prenom:S.nom, equipe:S.eq, semaine:parseInt(m[1]), exercice:m[2], charge:val, prescrit:''};
+    sbPost('vbc_charges', d, function(ok){ if(!ok) queueLocale('vbc_charges', d); });
+    envoyes++;
+  });
+
+  // 3) Les s\u00e9ances valid\u00e9es localement mais jamais envoy\u00e9es
+  Object.keys(S.done || {}).forEach(function(k) {
+    var m = k.match(/^S(\d+)-(.+)$/);
+    if (!m) return;
+    var info = S.done[k] || {};
+    var d = {prenom:S.nom, equipe:S.eq, semaine:parseInt(m[1]), type_seance:m[2],
+             feeling:info.feel||0, note:'', date_seance:info.date||new Date().toLocaleDateString('fr-FR')};
+    sbPost('vbc_seances', d, function(ok){ if(!ok) queueLocale('vbc_seances', d); });
+    envoyes++;
+  });
+
+  try { localStorage.setItem('vbc-sauvetage-v30', S.nom); } catch(e) {}
+  if (envoyes > 0) setTimeout(function(){ toast('\u2713 '+envoyes+' donn\u00e9es sauvegard\u00e9es sur le serveur'); }, 1500);
+}
 function loadMesSeances() {
   if (!S.nom) return;
   sbGetCache('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&order=semaine.asc', function(rows, ok) {
@@ -1919,7 +1961,8 @@ loadS();
 syncEffectif(function(){restoreProfil();remplirNomsProfil();});
 restoreProfil();
 viderFileAttente();
-loadMesSeances();
+setTimeout(sauvetageDonneesLocales, 1200);
+setTimeout(loadMesSeances, 2500);
 setTimeout(viderFileAttente, 3000);
 restoreRM();
 renAccueil();
