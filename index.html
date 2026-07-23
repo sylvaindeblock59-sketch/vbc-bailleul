@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v29</div>
+    <div class="hdr-pill">Été 2026 · v30</div>
   </div>
 </div>
 
@@ -2757,6 +2757,7 @@ function ouvrirFicheJoueuse(nom) {
         var by = {};
         chs.forEach(function(r) {
           if (!r.exercice || r.charge == null) return;
+          if (r.semaine === 0 || r.exercice.indexOf('RM-') === 0) return;
           if (!by[r.exercice]) by[r.exercice] = [];
           by[r.exercice].push(r);
         });
