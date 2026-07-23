@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v36</div>
+    <div class="hdr-pill">Été 2026 · v37</div>
   </div>
 </div>
 
@@ -697,12 +697,12 @@ window.onerror = function(msg, url, line) {
     </div>
     <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0012 0V2z"/></svg>Classement assiduité</div>
-      <div class="info-box">Podium des plus assidus \u2014 id\u00e9al \u00e0 partager \u00e0 mi-parcours pour motiver !</div>
+      <div class="info-box">Podium des plus assidus — idéal à partager à mi-parcours pour motiver !</div>
       <div id="st-classement"></div>
     </div>
     <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Progression des charges</div>
-      <div class="info-box">Plus belles progressions et \u00e9volution du poids soulev\u00e9.</div>
+      <div class="info-box">Plus belles progressions et évolution du poids soulevé.</div>
       <div id="st-progression"></div>
     </div>
     <div class="card">
@@ -2409,7 +2409,7 @@ function chargerClassement() {
         h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:8px;background:'+bg+';border-bottom:1px solid var(--bdr)">'
           + '<span style="font-size:16px;width:26px;text-align:center">'+rang+'</span>'
           + '<span style="flex:1;font-size:13px;font-weight:'+(i<3?'800':'600')+'">'+r.nom+'</span>'
-          + '<span style="font-size:11px;color:var(--txt2);text-align:right">'+r.sea+' s\u00e9ances'+(r.tauxPres!=null?'<br>'+r.tauxPres+'% pr\u00e9sence':'')+'</span>'
+          + '<span style="font-size:11px;color:var(--txt2);text-align:right">'+r.sea+' s\u00e9ance'+(r.sea>1?'s':'')+(r.tauxPres!=null?'<br>'+r.tauxPres+'% pr\u00e9sence':'')+'</span>'
           + '</div>';
       });
       el.innerHTML = h;
