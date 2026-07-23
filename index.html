@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v33</div>
+    <div class="hdr-pill">Été 2026 · v36</div>
   </div>
 </div>
 
@@ -491,8 +491,8 @@ window.onerror = function(msg, url, line) {
     <div class="ps-btn B" id="ps-circuit" onclick="choisirSeance('circuit')">
       <div class="ps-icon">⚡</div>
       <div class="ps-title">Circuit Force</div>
-      <div class="ps-sub">A · B · C</div>
-      <div class="ps-badge badge-opti">Bonus</div>
+      <div class="ps-sub">Sans matériel</div>
+      <div class="ps-badge badge-opti">Alt. salle</div>
     </div>
     <div class="ps-btn C" id="ps-extra" onclick="choisirSeance('extra')">
       <div class="ps-icon">🚴</div>
@@ -521,6 +521,11 @@ window.onerror = function(msg, url, line) {
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:12px;font-weight:700;color:var(--txt2)">📅 Date :</span>
         <input type="date" id="s-date" style="flex:1;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;font-weight:600;background:var(--card)">
+      </div>
+      <div id="s-alt-salle" style="display:none;background:#fff8e6;border-left:3px solid #d4691e;border-radius:8px;padding:9px 11px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#8a4b12;margin-bottom:5px">🏠 Pas d'accès à une salle de muscu ?</div>
+        <div style="font-size:12px;color:var(--txt2);line-height:1.45;margin-bottom:7px">Le <strong>Circuit Force</strong> remplace officiellement cette séance : même travail de force, sans matériel. Il compte dans ta prépa.</div>
+        <button onclick="choisirSeance('circuit')" style="padding:7px 12px;border-radius:7px;border:1.5px solid #d4691e;background:#fff;color:#d4691e;font-size:12px;font-weight:700;cursor:pointer">⚡ Faire le Circuit Force à la place</button>
       </div>
       <div id="s-info-box" style="margin-bottom:10px"></div>
       <div id="s-warm" style="margin-bottom:8px"></div>
@@ -1479,6 +1484,8 @@ function choisirSeance(t){
     var sd=document.getElementById('s-date');
     if(sd&&!sd.value)sd.value=new Date().toISOString().slice(0,10);
     renProgA();
+    var alt=document.getElementById('s-alt-salle');
+    if(alt)alt.style.display=(t==='salle')?'block':'none';
     var bA=document.querySelector("#prog-A .btn-grn");
     if(bA)bA.textContent=(t==='salle'?'\u2713 Valider ma s\u00e9ance SALLE':'\u2713 Valider ma s\u00e9ance EXT\u00c9RIEUR');
   } else if(t==='circuit'){
@@ -1813,8 +1820,24 @@ loadS = function() {
 
 // Patch valider() pour envoyer à Supabase
 var _origValider = valider;
+function semaineMaxAutorisee() {
+  var maxW = 0;
+  Object.keys(S.done||{}).forEach(function(k){
+    if (k.endsWith('-extra')) return;
+    var m = k.match(/^S(\d+)-/);
+    if (m) { var w = parseInt(m[1]); if (w > maxW) maxW = w; }
+  });
+  return Math.min(8, maxW + 1);
+}
 valider = function(prog) {
   if (window._validLock) { toast('D\u00e9j\u00e0 en cours d\u2019envoi\u2026'); return; }
+  // Progression : on ne peut pas sauter de semaines
+  var wDemande = prog==='A' ? S.week : S.cweek;
+  var wMax = semaineMaxAutorisee();
+  if (wDemande > wMax) {
+    alert('Tu es actuellement en Semaine '+wMax+'.\n\nTermine tes s\u00e9ances de la Semaine '+wMax+' avant de passer \u00e0 la Semaine '+wDemande+' \u2014 le programme est progressif, chaque semaine pr\u00e9pare la suivante \uD83D\uDCAA');
+    return;
+  }
   // Garde-fou : validation rapprochée (< 3 min depuis la précédente)
   var maintenant = Date.now();
   if (window._lastValid && (maintenant - window._lastValid) < 180000) {
@@ -1836,10 +1859,10 @@ valider = function(prog) {
     else jChk = new Date().toLocaleDateString('fr-FR');
     // Vérifie côté serveur : même type + même jour (date choisie) déjà enregistré ?
     sbGet('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&semaine=eq.'+wChk+'&type_seance=eq.'+encodeURIComponent(tChk), function(rows) {
-      var dejaCeJour = (rows||[]).some(function(r){ return r.date_seance === jChk; });
-      if (dejaCeJour) {
+      var dejaFaite = (rows||[]).length > 0;
+      if (dejaFaite) {
         var lbls = {salle:'Salle', ext:'Ext\u00e9rieur', circuit:'Circuit'};
-        toast('\u2713 S\u00e9ance '+(lbls[tChk]||tChk)+' d\u00e9j\u00e0 valid\u00e9e \u00e0 cette date');
+        toast('\u2713 '+(lbls[tChk]||tChk)+' d\u00e9j\u00e0 valid\u00e9e en S'+wChk);
         window._validLock = false;
       } else {
         _finaliserValidation(prog);
@@ -2206,6 +2229,11 @@ function resetCoachData() {
   saveS(); renCoachDash(); toast('Remis à zéro \u2713');
 }
 
+var _vueSuivi = 'barres';
+function basculerVueSuivi() {
+  _vueSuivi = (_vueSuivi === 'barres') ? 'grille' : 'barres';
+  chargerSuivi();
+}
 function chargerSuivi() {
   var el = document.getElementById('c-suivi');
   if (!el) return;
@@ -2226,6 +2254,40 @@ function chargerSuivi() {
       if (estRetro(s.semaine, s.date_seance)) byP[s.prenom].retro.push(s.semaine);
     });
     var W = [1,2,3,4,5,6,7,8];
+
+    if (_vueSuivi === 'barres') {
+      var arr = Object.keys(byP).map(function(n){
+        var d = byP[n];
+        var nb = d.sem.length;
+        var semUniq = {};
+        d.sem.forEach(function(w){ semUniq[w] = true; });
+        var nbSem = Object.keys(semUniq).length;
+        var derniere = Math.max.apply(null, d.sem.concat([0]));
+        return {nom:n, eq:d.eq, nb:nb, nbSem:nbSem, derniere:derniere, extra:d.extra, retro:d.retro.length};
+      }).sort(function(a,b){ return b.nb - a.nb; });
+      var maxNb = Math.max.apply(null, arr.map(function(x){return x.nb;}).concat([1]));
+      var hb = '';
+      ['f','m'].forEach(function(eq){
+        var grp = arr.filter(function(x){ return x.eq === eq; });
+        if (!grp.length) return;
+        hb += '<div style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);margin:12px 0 6px">'+(eq==='f'?'\u2640 N2F':'\u2642 N3M')+'</div>';
+        grp.forEach(function(r){
+          var pctB = Math.round(r.nb / maxNb * 100);
+          var couleur = r.nb >= 10 ? 'var(--grn)' : r.nb >= 5 ? '#d4691e' : 'var(--acc)';
+          hb += '<div style="margin-bottom:9px">'
+            + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">'
+            + '<span style="font-size:13px;font-weight:700">'+r.nom+'</span>'
+            + '<span style="font-size:11px;color:var(--txt2)"><strong style="color:'+couleur+';font-size:13px">'+r.nb+'</strong> s\u00e9a \u00b7 S'+r.derniere+(r.extra?' \u00b7 <span style="color:#2e6da4">+'+r.extra+' extra</span>':'')+'</span></div>'
+            + '<div style="height:9px;background:var(--bdr);border-radius:5px;overflow:hidden"><div style="height:100%;width:'+pctB+'%;background:'+couleur+';border-radius:5px"></div></div>'
+            + '</div>';
+        });
+      });
+      hb += '<div style="font-size:10px;color:var(--txt3);margin-top:8px">Bar\u00e8me couleur : <span style="color:var(--grn);font-weight:700">\u25CF</span> 10+ s\u00e9ances \u00b7 <span style="color:#d4691e;font-weight:700">\u25CF</span> 5-9 \u00b7 <span style="color:var(--acc);font-weight:700">\u25CF</span> moins de 5. S = derni\u00e8re semaine atteinte.</div>';
+      hb += '<div style="display:flex;gap:6px;margin-top:10px"><button onclick="basculerVueSuivi()" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:7px;font-size:11px">\u25A6 Vue d\u00e9taill\u00e9e</button><button onclick="chargerSuivi()" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:7px;font-size:11px">\u21BB Actualiser</button></div>';
+      el.innerHTML = note + hb;
+      return;
+    }
+
     var h = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:var(--bg)">'
       +'<th style="text-align:left;padding:5px 4px;color:var(--txt2)">Joueuse</th>'
       +W.map(function(w){return '<th style="text-align:center;padding:5px 2px;color:var(--txt2)">S'+w+'</th>';}).join('')
@@ -2242,7 +2304,7 @@ function chargerSuivi() {
     });
     h += '</tbody></table></div>';
     h += '<div style="font-size:10px;color:var(--txt3);margin-top:6px"><span style="color:var(--grn);font-weight:700">\u2713</span> valid\u00e9e dans la semaine \u00b7 <span style="color:#d4691e;font-weight:700">\u2713\u1D57</span> saisie a posteriori \u00b7 <span style=\"color:#2e6da4;font-weight:700\">+N</span> Extra Time (bonus)</div>';
-    h += '<button onclick="chargerSuivi()" class="btn btn-ghost" style="margin-top:8px;padding:7px;font-size:11px">\u21BB Actualiser</button>';
+    h += '<div style="display:flex;gap:6px;margin-top:8px"><button onclick="basculerVueSuivi()" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:7px;font-size:11px">\uD83D\uDCCA Vue r\u00e9sum\u00e9e</button><button onclick="chargerSuivi()" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:7px;font-size:11px">\u21BB Actualiser</button></div>';
     el.innerHTML = note + h;
   });
 }
@@ -2319,7 +2381,7 @@ function chargerClassement() {
   sbGetCache('vbc_seances', 'order=semaine.asc&limit=800', function(seances, ok) {
     var pres = null;
     sbGetCache('vbc_presences', 'limit=800', function(prows) {
-      var data = seances || [];
+      var data = (seances || []).filter(function(s){ return s.type_seance !== 'extra'; });
       if (_stFiltre !== 'all') data = data.filter(function(s){return s.equipe === _stFiltre;});
       var byN = {};
       data.forEach(function(s) {
@@ -2400,7 +2462,8 @@ function chargerStats() {
   chargerClassement();
   chargerProgression();
   sbGetCache('vbc_seances', 'order=created_at.asc&limit=500', function(seances, ok, cacheTs) {
-    if (_stFiltre !== 'all') seances = (seances || []).filter(function(s){return s.equipe === _stFiltre;});
+    seances = (seances || []).filter(function(s){ return s.type_seance !== 'extra'; });
+    if (_stFiltre !== 'all') seances = seances.filter(function(s){return s.equipe === _stFiltre;});
     var kpiNote = ok ? '' : noteCache((seances && seances.length) ? cacheTs : null);
     if (!seances || !seances.length) {
       var kpis = document.getElementById('st-kpis');
