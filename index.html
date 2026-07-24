@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v37</div>
+    <div class="hdr-pill">Été 2026 · v38</div>
   </div>
 </div>
 
@@ -704,6 +704,15 @@ window.onerror = function(msg, url, line) {
       <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Progression des charges</div>
       <div class="info-box">Plus belles progressions et évolution du poids soulevé.</div>
       <div id="st-progression"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Courbe d'évolution</div>
+      <div class="info-box">Choisis un joueur et un exercice pour voir sa progression semaine par semaine.</div>
+      <span class="label">Joueur / joueuse</span>
+      <select id="cv-nom" style="margin-bottom:8px" onchange="renCourbe()"><option value="">-- Choisir --</option></select>
+      <span class="label">Exercice</span>
+      <select id="cv-ex" style="margin-bottom:10px" onchange="renCourbe()"><option value="">-- Choisir --</option></select>
+      <div id="cv-graph"></div>
     </div>
     <div class="card">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Fiches individuelles</div>
@@ -2416,6 +2425,89 @@ function chargerClassement() {
     });
   });
 }
+var _cvData = null;
+function chargerCourbeData() {
+  sbGetCache('vbc_charges', 'order=semaine.asc&limit=1500', function(rows) {
+    _cvData = (rows || []).filter(function(r){
+      return r.charge != null && r.semaine > 0 && (r.exercice||'').indexOf('RM-') !== 0;
+    });
+    var selN = document.getElementById('cv-nom');
+    if (selN && selN.options.length <= 1) {
+      var noms = {};
+      _cvData.forEach(function(r){ if(_stFiltre==='all'||r.equipe===_stFiltre) noms[r.prenom]=true; });
+      Object.keys(noms).sort().forEach(function(n){
+        var o=document.createElement('option'); o.value=n; o.textContent=n; selN.appendChild(o);
+      });
+    }
+  });
+}
+function majExosCourbe() {
+  var nom = document.getElementById('cv-nom').value;
+  var selE = document.getElementById('cv-ex');
+  selE.innerHTML = '<option value="">-- Choisir --</option>';
+  if (!nom || !_cvData) return;
+  var exos = {};
+  _cvData.forEach(function(r){ if(r.prenom===nom) exos[r.exercice]=true; });
+  Object.keys(exos).forEach(function(e){
+    var o=document.createElement('option'); o.value=e; o.textContent=exoNom(e); selE.appendChild(o);
+  });
+}
+function renCourbe() {
+  var el = document.getElementById('cv-graph');
+  if (!el) return;
+  var nom = document.getElementById('cv-nom').value;
+  var selE = document.getElementById('cv-ex');
+  if (!_cvData) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3)">Chargement…</div>'; return; }
+  if (selE.options.length <= 1 || (nom && selE.dataset.pour !== nom)) { majExosCourbe(); selE.dataset.pour = nom; }
+  var ex = selE.value;
+  if (!nom || !ex) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:8px 0">Choisis un joueur et un exercice.</div>'; return; }
+
+  var pts = _cvData.filter(function(r){ return r.prenom===nom && r.exercice===ex; })
+                   .sort(function(a,b){ return a.semaine-b.semaine; });
+  if (pts.length < 1) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3)">Aucune donnée.</div>'; return; }
+
+  var W=320, H=190, ML=38, MR=14, MT=16, MB=30;
+  var iw = W-ML-MR, ih = H-MT-MB;
+  var vals = pts.map(function(p){ return parseFloat(p.charge); });
+  var vMin = Math.min.apply(null, vals), vMax = Math.max.apply(null, vals);
+  if (vMax === vMin) { vMax = vMin + 5; vMin = Math.max(0, vMin - 5); }
+  var pad = (vMax-vMin)*0.15; vMin = Math.max(0, vMin-pad); vMax = vMax+pad;
+  var sMin = pts[0].semaine, sMax = pts[pts.length-1].semaine;
+  if (sMax === sMin) sMax = sMin + 1;
+  function X(s){ return ML + (s-sMin)/(sMax-sMin)*iw; }
+  function Y(v){ return MT + ih - (v-vMin)/(vMax-vMin)*ih; }
+
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block">';
+  // grille horizontale + axe Y
+  for (var g=0; g<=3; g++) {
+    var vy = vMin + (vMax-vMin)*g/3;
+    var yy = Y(vy);
+    svg += '<line x1="'+ML+'" y1="'+yy.toFixed(1)+'" x2="'+(W-MR)+'" y2="'+yy.toFixed(1)+'" stroke="#e2e8f0" stroke-width="1"/>';
+    svg += '<text x="'+(ML-6)+'" y="'+(yy+3.5).toFixed(1)+'" text-anchor="end" font-size="9" fill="#94a3b8">'+Math.round(vy)+'</text>';
+  }
+  // aire sous la courbe
+  var aire = pts.map(function(p){ return X(p.semaine).toFixed(1)+','+Y(parseFloat(p.charge)).toFixed(1); }).join(' ');
+  svg += '<polygon points="'+ML+','+(MT+ih)+' '+aire+' '+(X(pts[pts.length-1].semaine)).toFixed(1)+','+(MT+ih)+'" fill="rgba(46,109,164,.14)"/>';
+  // ligne
+  svg += '<polyline points="'+aire+'" fill="none" stroke="#2e6da4" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+  // points + valeurs
+  pts.forEach(function(p){
+    var x=X(p.semaine), y=Y(parseFloat(p.charge));
+    svg += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4.5" fill="#fff" stroke="#2e6da4" stroke-width="2.5"/>';
+    svg += '<text x="'+x.toFixed(1)+'" y="'+(y-10).toFixed(1)+'" text-anchor="middle" font-size="10" font-weight="800" fill="#1d3a5f">'+p.charge+'</text>';
+    svg += '<text x="'+x.toFixed(1)+'" y="'+(MT+ih+16)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#64748b">S'+p.semaine+'</text>';
+  });
+  svg += '</svg>';
+
+  var d = vals[vals.length-1] - vals[0];
+  var pctD = vals[0] ? Math.round(d/vals[0]*100) : 0;
+  var coul = d > 0 ? 'var(--grn)' : d < 0 ? 'var(--acc)' : 'var(--txt2)';
+  el.innerHTML = svg
+    + '<div style="display:flex;gap:8px;margin-top:6px">'
+    + '<div style="flex:1;background:var(--bg);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900">'+vals[0]+' → '+vals[vals.length-1]+' kg</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">D\u00e9but \u2192 actuel</div></div>'
+    + '<div style="flex:1;background:var(--bg);border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:'+coul+'">'+(d>0?'+':'')+Math.round(d*10)/10+' kg</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">'+(pctD>0?'+':'')+pctD+'%</div></div>'
+    + '</div>';
+}
 function chargerProgression() {
   var el = document.getElementById('st-progression');
   if (!el) return;
@@ -2461,6 +2553,7 @@ function setStFiltre(f) {
 function chargerStats() {
   chargerClassement();
   chargerProgression();
+  chargerCourbeData();
   sbGetCache('vbc_seances', 'order=created_at.asc&limit=500', function(seances, ok, cacheTs) {
     seances = (seances || []).filter(function(s){ return s.type_seance !== 'extra'; });
     if (_stFiltre !== 'all') seances = seances.filter(function(s){return s.equipe === _stFiltre;});
