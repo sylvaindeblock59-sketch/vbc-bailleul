@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v38</div>
+    <div class="hdr-pill">Été 2026 · v39</div>
   </div>
 </div>
 
@@ -1564,6 +1564,7 @@ function renSeance(){
 }
 
 function renProgA(){
+  if(S.nom&&!window._seancesSync){window._seancesSync=true;loadMesSeances();}
   if(_chgHist===null&&S.nom){loadCharges(function(){if(S.prog==='A')renProgA();});}
   const w=S.week;
   if(w>PROG_MAX){
