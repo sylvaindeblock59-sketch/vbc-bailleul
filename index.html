@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v39</div>
+    <div class="hdr-pill">Été 2026 · v40</div>
   </div>
 </div>
 
@@ -995,6 +995,7 @@ function sbPost(table, data, cb) {
   try { xhr.send(JSON.stringify(data)); } catch(e) { if (cb) cb(false); }
 }
 
+var BASE_FICHES = 'https://sylvaindeblock59-sketch.github.io/vbc-bailleul/';
 var TABLES_CLUB = ['vbc_seances','vbc_players','vbc_charges','vbc_presences','vbc_checkins','vbc_tests'];
 function sbGet(table, params, cb) {
   if (TABLES_CLUB.indexOf(table) >= 0) params = (params ? params+'&' : '') + 'club=is.null';
@@ -1657,7 +1658,22 @@ function renProgB(){
         ${g.alt&&g.alt.length?`<span style="font-size:11px;color:var(--txt2)">Alt: ${g.alt.join(' \u00B7 ')}</span>`:''}
       </div>
     </div>`;
-  }).join('')+`<div class="info-box"><strong>Finition :</strong> ${circ.fin}</div>`;
+  }).join('')+`<div class="info-box"><strong>Finition :</strong> ${circ.fin}</div>`
+  + (S.cweek>=5 ? `
+    <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;padding:14px;margin-top:12px">
+      <div style="font-weight:800;font-size:13px;margin-bottom:6px">\uD83D\uDCCB La séance complète</div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:12px">À partir de la semaine 5, ta séance se compose du <strong>Circuit Squat</strong> (force & puissance des jambes) suivi du <strong>Circuit Gainage</strong> (core & stabilité) en finition. Consulte les fiches détaillées avec les exercices, les temps et les muscles sollicités :</div>
+      <a href="${BASE_FICHES}circuit-squat.jpg" target="_blank" style="display:flex;align-items:center;gap:10px;padding:11px 13px;margin-bottom:8px;border-radius:10px;background:#eaf1f8;border:1.5px solid #2e6da4;text-decoration:none">
+        <span style="font-size:20px">\uD83C\uDFCB</span>
+        <span style="flex:1"><span style="display:block;font-size:13px;font-weight:800;color:#1d3a5f">Circuit Squat</span><span style="font-size:11px;color:var(--txt2)">Force & puissance des jambes</span></span>
+        <span style="font-size:11px;font-weight:700;color:#2e6da4">Voir \u2192</span>
+      </a>
+      <a href="${BASE_FICHES}circuit-gainage.jpg" target="_blank" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:#eaf1f8;border:1.5px solid #2e6da4;text-decoration:none">
+        <span style="font-size:20px">\uD83E\uDDD8</span>
+        <span style="flex:1"><span style="display:block;font-size:13px;font-weight:800;color:#1d3a5f">Circuit Gainage</span><span style="font-size:11px;color:var(--txt2)">Core & stabilité \u00b7 finition</span></span>
+        <span style="font-size:11px;font-weight:700;color:#2e6da4">Voir \u2192</span>
+      </a>
+    </div>` : '');
 }
 
 function chCW(d){S.cweek=Math.max(1,Math.min(8,S.cweek+d));saveS();renProgB();}
