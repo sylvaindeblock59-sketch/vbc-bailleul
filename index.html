@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v43</div>
+    <div class="hdr-pill">Été 2026 · v45</div>
   </div>
 </div>
 
@@ -887,7 +887,7 @@ window.onerror = function(msg, url, line) {
 <div id="media-viewer" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,20,35,.94);flex-direction:column">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));background:var(--pri)">
     <span id="mv-title" style="color:#fff;font-weight:800;font-size:15px">Fiche</span>
-    <button onclick="fermerMedia()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:15px;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer">\u2715 Fermer</button>
+    <button onclick="fermerMedia()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:15px;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer">✕ Fermer</button>
   </div>
   <div id="mv-content" style="flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:12px"></div>
 </div>
@@ -1692,7 +1692,7 @@ function renProgB(){
   + (S.cweek>=5 ? `
     <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;padding:14px;margin-top:12px">
       <div style="font-weight:800;font-size:13px;margin-bottom:6px">\uD83D\uDCCB La séance complète</div>
-      <div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:12px">À partir de la semaine 5, ta séance se compose du <strong>Circuit Squat</strong> (force & puissance des jambes) suivi du <strong>Circuit Gainage</strong> (core & stabilité) en finition. Consulte les fiches détaillées avec les exercices, les temps et les muscles sollicités :</div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:12px">À partir de la semaine 5, ta séance se complète par un <strong>Circuit Squat</strong> (force & puissance des jambes) suivi du <strong>Circuit Gainage</strong> (core & stabilité) en finition.<br><strong style="color:var(--txt)">Circuit Squat : ${S.cweek>=7?'2 séries':'1 série'} (semaine ${S.cweek}).</strong><br>Consulte les fiches détaillées avec les exercices, les temps et les muscles sollicités :</div>
       <div onclick="ouvrirImage(BASE_FICHES+'circuit-squat.jpg','Circuit Squat')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;margin-bottom:8px;border-radius:10px;background:#eaf1f8;border:1.5px solid #2e6da4;cursor:pointer">
         <span style="font-size:20px">\uD83C\uDFCB</span>
         <span style="flex:1"><span style="display:block;font-size:13px;font-weight:800;color:#1d3a5f">Circuit Squat</span><span style="font-size:11px;color:var(--txt2)">Force & puissance des jambes</span></span>
