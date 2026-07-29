@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v40</div>
+    <div class="hdr-pill">Été 2026 · v43</div>
   </div>
 </div>
 
@@ -884,6 +884,13 @@ window.onerror = function(msg, url, line) {
 </div>
 
 <!-- MODAL FICHE JOUEUSE -->
+<div id="media-viewer" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,20,35,.94);flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));background:var(--pri)">
+    <span id="mv-title" style="color:#fff;font-weight:800;font-size:15px">Fiche</span>
+    <button onclick="fermerMedia()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:15px;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer">\u2715 Fermer</button>
+  </div>
+  <div id="mv-content" style="flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:12px"></div>
+</div>
 <div class="modal-bg" id="modal-joueuse" onclick="if(event.target===this)fermerFicheJoueuse()">
   <div class="modal">
     <div class="modal-hd">
@@ -995,7 +1002,30 @@ function sbPost(table, data, cb) {
   try { xhr.send(JSON.stringify(data)); } catch(e) { if (cb) cb(false); }
 }
 
+function ouvrirImage(url, titre) {
+  document.getElementById('mv-title').textContent = titre || 'Fiche';
+  document.getElementById('mv-content').innerHTML = '<img src="'+url+'" style="max-width:100%;height:auto;border-radius:8px" alt="'+(titre||'')+'">';
+  document.getElementById('media-viewer').style.display = 'flex';
+}
+function ouvrirVideo(url, titre) {
+  var id = '';
+  var m = url.match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{11})/);
+  if (m) id = m[1];
+  document.getElementById('mv-title').textContent = titre || 'Vidéo';
+  if (id) {
+    document.getElementById('mv-content').innerHTML = '<div style="width:100%;max-width:640px"><div style="position:relative;padding-bottom:56.25%;height:0"><iframe src="https://www.youtube.com/embed/'+id+'" style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:8px" allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div></div>';
+  } else {
+    document.getElementById('mv-content').innerHTML = '<a href="'+url+'" target="_blank" style="color:#fff;font-weight:700">Ouvrir la vidéo \u2192</a>';
+  }
+  document.getElementById('media-viewer').style.display = 'flex';
+}
+function fermerMedia() {
+  document.getElementById('media-viewer').style.display = 'none';
+  document.getElementById('mv-content').innerHTML = '';
+}
 var BASE_FICHES = 'https://sylvaindeblock59-sketch.github.io/vbc-bailleul/';
+var VID_SQUAT = 'https://youtube.com/shorts/LIMGJcoIZpE';
+var VID_DEADBUG = 'https://youtu.be/mUMVASv0x7U';
 var TABLES_CLUB = ['vbc_seances','vbc_players','vbc_charges','vbc_presences','vbc_checkins','vbc_tests'];
 function sbGet(table, params, cb) {
   if (TABLES_CLUB.indexOf(table) >= 0) params = (params ? params+'&' : '') + 'club=is.null';
@@ -1609,7 +1639,7 @@ function renProgA(){
         <div class="ex-reps">${e.reps}</div>
         ${(e.df||e.dm)?chargeHTML(e,w):''}
         <div class="ex-links">
-          ${hasVid?`<a class="ex-vid" href="${e.vid}" target="_blank"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--inf)" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>Voir la vidéo</a>`:''}
+          ${hasVid?`<a class="ex-vid" href="javascript:void(0)" onclick="ouvrirVideo('${e.vid}','${(e.n||'Exercice').replace(/'/g,"")}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--inf)" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>Voir la vidéo</a>`:''}
           ${hasAlt?`<button class="ex-alt${active?' active':''}" onclick="openAlt('${e.id}',${JSON.stringify(e.nom)},${JSON.stringify(e.alt)})">${active?'\u2726 Alternatif actif':'\u21C4 Remplacer'}</button>`:''}
         </div>
       </div>
@@ -1653,7 +1683,7 @@ function renProgB(){
         <div class="circ-reps">${reps}</div>
       </div>
       <div class="circ-body">
-        ${g.vid?`<a class="ex-vid" href="${g.vid}" target="_blank"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--inf)" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>Vidéo</a>`:''}
+        ${g.vid?`<a class="ex-vid" href="javascript:void(0)" onclick="ouvrirVideo('${g.vid}','${(g.n||'Exercice').replace(/'/g,"")}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--inf)" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>Vidéo</a>`:''}
         ${g.alt&&g.alt.length?`<button class="ex-alt${active?' active':''}" onclick="openAltCirc('${ak}',${JSON.stringify(g.ex)},${JSON.stringify(g.alt)})">${active?'\u2726 Alt actif':'\u21C4 Remplacer'}</button>`:''}
         ${g.alt&&g.alt.length?`<span style="font-size:11px;color:var(--txt2)">Alt: ${g.alt.join(' \u00B7 ')}</span>`:''}
       </div>
@@ -1663,16 +1693,19 @@ function renProgB(){
     <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;padding:14px;margin-top:12px">
       <div style="font-weight:800;font-size:13px;margin-bottom:6px">\uD83D\uDCCB La séance complète</div>
       <div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:12px">À partir de la semaine 5, ta séance se compose du <strong>Circuit Squat</strong> (force & puissance des jambes) suivi du <strong>Circuit Gainage</strong> (core & stabilité) en finition. Consulte les fiches détaillées avec les exercices, les temps et les muscles sollicités :</div>
-      <a href="${BASE_FICHES}circuit-squat.jpg" target="_blank" style="display:flex;align-items:center;gap:10px;padding:11px 13px;margin-bottom:8px;border-radius:10px;background:#eaf1f8;border:1.5px solid #2e6da4;text-decoration:none">
+      <div onclick="ouvrirImage(BASE_FICHES+'circuit-squat.jpg','Circuit Squat')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;margin-bottom:8px;border-radius:10px;background:#eaf1f8;border:1.5px solid #2e6da4;cursor:pointer">
         <span style="font-size:20px">\uD83C\uDFCB</span>
         <span style="flex:1"><span style="display:block;font-size:13px;font-weight:800;color:#1d3a5f">Circuit Squat</span><span style="font-size:11px;color:var(--txt2)">Force & puissance des jambes</span></span>
         <span style="font-size:11px;font-weight:700;color:#2e6da4">Voir \u2192</span>
-      </a>
-      <a href="${BASE_FICHES}circuit-gainage.jpg" target="_blank" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:#eaf1f8;border:1.5px solid #2e6da4;text-decoration:none">
+      </div>
+      <div onclick="ouvrirImage(BASE_FICHES+'circuit-gainage.jpg','Circuit Gainage')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:#eaf1f8;border:1.5px solid #2e6da4;cursor:pointer">
         <span style="font-size:20px">\uD83E\uDDD8</span>
         <span style="flex:1"><span style="display:block;font-size:13px;font-weight:800;color:#1d3a5f">Circuit Gainage</span><span style="font-size:11px;color:var(--txt2)">Core & stabilité \u00b7 finition</span></span>
         <span style="font-size:11px;font-weight:700;color:#2e6da4">Voir \u2192</span>
-      </a>
+      </div>
+      <div style="font-weight:800;font-size:12px;margin:12px 0 6px;color:var(--txt2)">\uD83C\uDFAC Vidéos techniques</div>
+      ${VID_SQUAT?`<div onclick="ouvrirVideo(VID_SQUAT,'Technique du Squat')" style="display:flex;align-items:center;gap:10px;padding:10px 13px;margin-bottom:8px;border-radius:10px;background:#fef2f2;border:1.5px solid #d4691e;cursor:pointer"><span style="font-size:18px">\u25B6\uFE0F</span><span style="flex:1;font-size:13px;font-weight:700;color:#1d3a5f">Technique du Squat</span><span style="font-size:11px;font-weight:700;color:#d4691e">Voir \u2192</span></div>`:''}
+      <div onclick="ouvrirVideo(VID_DEADBUG,'Dead Bug — gainage profond')" style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:10px;background:#fef2f2;border:1.5px solid #d4691e;cursor:pointer"><span style="font-size:18px">\u25B6\uFE0F</span><span style="flex:1;font-size:13px;font-weight:700;color:#1d3a5f">Dead Bug \u2014 gainage profond</span><span style="font-size:11px;font-weight:700;color:#d4691e">Voir \u2192</span></div>
     </div>` : '');
 }
 
