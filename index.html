@@ -303,7 +303,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v45</div>
+    <div class="hdr-pill">Été 2026 · v46</div>
   </div>
 </div>
 
@@ -334,6 +334,10 @@ window.onerror = function(msg, url, line) {
   <div class="card" id="mp-card" style="display:none">
     <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Ma progression</div>
     <div id="mp-body"></div>
+  </div>
+  <div class="card" id="test-card" style="display:none;border:2px solid var(--pri)">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Test physique demandé par ton coach</div>
+    <div id="test-body"></div>
   </div>
   <div class="card" id="ci-done" style="display:none">
     <div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:800;font-size:13px">Check-in du jour envoyé</div><div style="font-size:11px;color:var(--txt2)">À demain !</div></div></div>
@@ -787,8 +791,23 @@ window.onerror = function(msg, url, line) {
       <button onclick="chargerBienEtre()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
     </div>
     <div class="card">
-      <div class="card-title"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Tests physiques</div>
-      <div class="info-box">Mesure en S1, S4 et S8 — la progression apparaît dans chaque fiche.</div>
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Demander un test aux joueuses</div>
+      <div class="info-box">Active un test : il apparaîtra chez tes joueuses qui saisiront leurs valeurs. Désactive-le quand c'est terminé.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
+        <label style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;border:1.5px solid var(--bdr);cursor:pointer;background:var(--card)">
+          <input type="checkbox" id="tact-detente" onchange="majTestsActifs()" style="width:20px;height:20px;accent-color:var(--pri)">
+          <span style="flex:1"><span style="display:block;font-size:14px;font-weight:800">📏 Test Détente</span><span style="font-size:11px;color:var(--txt2)">Détente verticale pieds joints (bras levé + saut)</span></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;border:1.5px solid var(--bdr);cursor:pointer;background:var(--card)">
+          <input type="checkbox" id="tact-vitesse" onchange="majTestsActifs()" style="width:20px;height:20px;accent-color:var(--pri)">
+          <span style="flex:1"><span style="display:block;font-size:14px;font-weight:800">⚡ Test Vitesse / Endurance</span><span style="font-size:11px;color:var(--txt2)">Parcours + pulsations avant/après</span></span>
+        </label>
+      </div>
+      <div id="tact-status" style="font-size:11px;color:var(--txt3);margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Saisie manuelle (coach)</div>
+      <div class="info-box">Pour entrer un résultat toi-même. La progression apparaît dans chaque fiche.</div>
       <span class="label">Test</span>
       <div style="display:flex;gap:6px;margin-bottom:10px">
         <button onclick="tstSetType('detente')" id="tst-detente" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--pri);background:var(--pri);color:#fff;font-size:11px;font-weight:700;cursor:pointer">Détente</button>
@@ -1688,7 +1707,7 @@ function renProgB(){
         ${g.alt&&g.alt.length?`<span style="font-size:11px;color:var(--txt2)">Alt: ${g.alt.join(' \u00B7 ')}</span>`:''}
       </div>
     </div>`;
-  }).join('')+`<div class="info-box"><strong>Finition :</strong> ${circ.fin}</div>`
+  }).join('')+`<div class="info-box"><strong>Finition :</strong> ${S.cweek>=5?'Circuit Squat puis Circuit Gainage':circ.fin}</div>`
   + (S.cweek>=5 ? `
     <div style="background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;padding:14px;margin-top:12px">
       <div style="font-weight:800;font-size:13px;margin-bottom:6px">\uD83D\uDCCB La séance complète</div>
@@ -1774,6 +1793,7 @@ function closeModal(){document.getElementById('modal-bg').classList.remove('vis'
 function renAccueil(){
   renCheckin();
   renMaProgression();
+  chargerTestsActifs(renTestJoueuse);
   const tot=Object.keys(S.done).length;const pct=Math.round(tot/16*100);
   document.getElementById('h-done').textContent=tot;
   document.getElementById('h-pct').textContent=pct+'%';
@@ -2164,6 +2184,7 @@ function renStats() {
 }
 
 function renCoachDash() {
+  chargerTestsActifs();
   renPrListe();
   chargerPrResume();
   chargerBienEtre();
@@ -2859,6 +2880,113 @@ function chargerPrResume() {
     });
     el.innerHTML = h;
   });
+}
+var _testsActifs = {detente:false, vitesse:false};
+var BASE_TESTS = BASE_FICHES; // fiches de test hébergées à la racine GitHub
+
+function chargerTestsActifs(cb){
+  sbGet('vbc_config', 'cle=eq.tests_actifs', function(rows){
+    if(rows && rows.length && rows[0].valeur){
+      try{ _testsActifs = JSON.parse(rows[0].valeur); }catch(e){}
+    }
+    // refléter dans les cases coach
+    var cd=document.getElementById('tact-detente'), cv=document.getElementById('tact-vitesse');
+    if(cd) cd.checked = !!_testsActifs.detente;
+    if(cv) cv.checked = !!_testsActifs.vitesse;
+    majTestStatus();
+    if(cb) cb();
+  });
+}
+function majTestsActifs(){
+  _testsActifs = {
+    detente: document.getElementById('tact-detente').checked,
+    vitesse: document.getElementById('tact-vitesse').checked
+  };
+  // upsert dans vbc_config
+  sbPost('vbc_config', {cle:'tests_actifs', valeur:JSON.stringify(_testsActifs)}, function(ok){
+    if(!ok){
+      // si existe déjà, PATCH
+      fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.tests_actifs',{
+        method:'PATCH',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({valeur:JSON.stringify(_testsActifs)})
+      });
+    }
+  });
+  majTestStatus();
+}
+function majTestStatus(){
+  var el=document.getElementById('tact-status');
+  if(!el) return;
+  var actifs=[];
+  if(_testsActifs.detente) actifs.push('Détente');
+  if(_testsActifs.vitesse) actifs.push('Vitesse/Endurance');
+  el.innerHTML = actifs.length ? '🟢 Test actif : <strong>'+actifs.join(' + ')+'</strong> — visible chez tes joueuses.' : '⚪ Aucun test actif actuellement.';
+}
+function renTestJoueuse(){
+  var card=document.getElementById('test-card'), body=document.getElementById('test-body');
+  if(!card||!body) return;
+  if(!S.nom || (!_testsActifs.detente && !_testsActifs.vitesse)){ card.style.display='none'; return; }
+  var h='';
+  if(_testsActifs.detente){
+    h+='<div style="margin-bottom:'+(_testsActifs.vitesse?'18px':'0')+'">'
+      +'<div style="font-weight:800;font-size:14px;margin-bottom:4px">📏 Test Détente verticale</div>'
+      +'<div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:8px">Pieds joints, dos au mur : mesure ta main levée, puis saute et touche le plus haut. La différence = ta détente.</div>'
+      +'<div onclick="ouvrirImage(BASE_TESTS+\'test-detente.jpg\',\'Test Détente\')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;margin-bottom:10px;border-radius:8px;background:#eaf1f8;border:1.5px solid #2e6da4;cursor:pointer;font-size:12px;font-weight:700;color:#1d3a5f">📋 Voir comment faire</div>'
+      +'<span class="label">Hauteur bras levé au mur (cm)</span>'
+      +'<input type="number" inputmode="decimal" id="td-bras" placeholder="Ex : 210" style="margin-bottom:8px" oninput="calcDetente()">'
+      +'<span class="label">Hauteur atteinte au saut (cm)</span>'
+      +'<input type="number" inputmode="decimal" id="td-saut" placeholder="Ex : 250" style="margin-bottom:8px" oninput="calcDetente()">'
+      +'<div id="td-result" style="background:var(--grn-bg);border-radius:8px;padding:10px;text-align:center;margin-bottom:6px;display:none"><span style="font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase">Ta détente</span><div id="td-val" style="font-size:22px;font-weight:900;color:var(--grn)">— cm</div></div>'
+      +'</div>';
+  }
+  if(_testsActifs.vitesse){
+    h+='<div>'
+      +'<div style="font-weight:800;font-size:14px;margin-bottom:4px">⚡ Test Vitesse / Endurance</div>'
+      +'<div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:8px">Prends tes pulsations (15 sec × 4) avant et après le test. Suis la fiche pour le parcours.</div>'
+      +'<div onclick="ouvrirImage(BASE_TESTS+\'test-vitesse.jpg\',\'Test Vitesse\')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;margin-bottom:10px;border-radius:8px;background:#eaf1f8;border:1.5px solid #2e6da4;cursor:pointer;font-size:12px;font-weight:700;color:#1d3a5f">📋 Voir la fiche du test</div>'
+      +'<span class="label">❤️ Pulsations avant (repos, bpm)</span>'
+      +'<input type="number" inputmode="numeric" id="tv-repos" placeholder="Ex : 65" style="margin-bottom:8px">'
+      +'<span class="label">❤️ Pulsations après effort (bpm)</span>'
+      +'<input type="number" inputmode="numeric" id="tv-effort" placeholder="Ex : 145" style="margin-bottom:8px">'
+      +'</div>';
+  }
+  h+='<span class="label">Ressenti (1 = facile, 10 = très dur)</span>'
+    +'<input type="number" inputmode="numeric" id="t-ressenti" min="1" max="10" placeholder="Ex : 7" style="margin-bottom:12px">'
+    +'<button class="btn btn-grn" onclick="envoyerTest()" style="margin-bottom:0">Envoyer mon test ✓</button>';
+  card.style.display='block';
+  body.innerHTML=h;
+}
+function calcDetente(){
+  var b=parseFloat(document.getElementById('td-bras').value);
+  var s=parseFloat(document.getElementById('td-saut').value);
+  var r=document.getElementById('td-result'), v=document.getElementById('td-val');
+  if(!isNaN(b)&&!isNaN(s)&&s>b){ r.style.display='block'; v.textContent=Math.round((s-b)*10)/10+' cm'; }
+  else r.style.display='none';
+}
+function envoyerTest(){
+  if(!S.nom||!S.eq){toast('Choisis ton nom dans Profil');return;}
+  var w=S.week||1, envoye=0;
+  var ress=parseInt(document.getElementById('t-ressenti').value)||0;
+  if(_testsActifs.detente){
+    var b=parseFloat(document.getElementById('td-bras').value);
+    var s=parseFloat(document.getElementById('td-saut').value);
+    if(!isNaN(b)&&!isNaN(s)&&s>b){
+      var det=Math.round((s-b)*10)/10;
+      sbInsert('vbc_tests',{prenom:S.nom,equipe:S.eq,semaine:w,test:'detente',valeur:det,note:'bras '+b+' / saut '+s+' / ressenti '+ress});
+      envoye++;
+    }
+  }
+  if(_testsActifs.vitesse){
+    var rep=parseInt(document.getElementById('tv-repos').value);
+    var eff=parseInt(document.getElementById('tv-effort').value);
+    if(!isNaN(rep)) { sbInsert('vbc_tests',{prenom:S.nom,equipe:S.eq,semaine:w,test:'puls_repos',valeur:rep,note:'ressenti '+ress}); envoye++; }
+    if(!isNaN(eff)) { sbInsert('vbc_tests',{prenom:S.nom,equipe:S.eq,semaine:w,test:'puls_effort',valeur:eff,note:''}); envoye++; }
+  }
+  if(!envoye){toast('Remplis au moins un test');return;}
+  toast('Test envoyé à ton coach ✓');
+  var body=document.getElementById('test-body');
+  body.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:32px">✅</div><div style="font-weight:800;font-size:14px;margin-top:6px">Test envoyé, merci !</div><div style="font-size:12px;color:var(--txt2)">Ton coach a reçu tes résultats.</div></div>';
 }
 function renMaProgression() {
   var card = document.getElementById('mp-card');
