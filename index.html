@@ -164,6 +164,8 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 .ps-btn.on.A{border-color:var(--grn);background:var(--grn-bg)}
 .ps-btn.on.B{border-color:var(--org);background:var(--org-bg)}
 .ps-btn.on.C{border-color:#2e6da4;background:#e8f0f8}
+.test-alerte{background:linear-gradient(90deg,#dc2626,#ef4444);color:#fff;font-size:15px;font-weight:900;text-align:center;padding:12px;border-radius:10px;margin-bottom:14px;animation:pulseAlerte 1.4s ease-in-out infinite}
+@keyframes pulseAlerte{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.75;transform:scale(1.02)}}
 .prog-switch{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ps-icon{font-size:26px;line-height:1.1}
 .ps-title{font-size:14px}
@@ -303,7 +305,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v46</div>
+    <div class="hdr-pill">Été 2026 · v48</div>
   </div>
 </div>
 
@@ -1036,6 +1038,11 @@ function ouvrirVideo(url, titre) {
   } else {
     document.getElementById('mv-content').innerHTML = '<a href="'+url+'" target="_blank" style="color:#fff;font-weight:700">Ouvrir la vidéo \u2192</a>';
   }
+  document.getElementById('media-viewer').style.display = 'flex';
+}
+function ouvrirAnimation() {
+  document.getElementById('mv-title').textContent = 'Parcours du test';
+  document.getElementById('mv-content').innerHTML = '<div style="width:100%;max-width:440px"><iframe src="'+BASE_TESTS+'parcours-test.html" style="width:100%;height:78vh;border:0;border-radius:10px;background:#0f2438"></iframe></div>';
   document.getElementById('media-viewer').style.display = 'flex';
 }
 function fermerMedia() {
@@ -2928,6 +2935,16 @@ function renTestJoueuse(){
   if(!card||!body) return;
   if(!S.nom || (!_testsActifs.detente && !_testsActifs.vitesse)){ card.style.display='none'; return; }
   var h='';
+  // Bandeau d'alerte clignotant
+  h+='<div class="test-alerte">🚨 TEST PHYSIQUE DEMANDÉ 🚨<br><span style="font-size:11px;font-weight:600">Ton coach attend tes résultats cette semaine</span></div>';
+  // Explication du test
+  if(_testsActifs.vitesse){
+    h+='<div style="background:#eef4fb;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;line-height:1.55;color:var(--txt2)">'
+      +'<strong style="color:var(--txt)">Le mot du coach :</strong><br>Afin d\'évaluer votre forme à 3 semaines de la reprise, je vous propose un test vitesse à faire <strong>2 fois</strong> (1m30 de pause entre les 2). Puis, après 3 min de récup, un <strong>Circuit Squat</strong> (1×) et un <strong>Circuit Gainage</strong> (2×). Prises de pulsations et de temps à chaque étape. Bon courage ! 💪'
+      +'</div>';
+    h+='<div onclick="ouvrirAnimation()" style="display:flex;align-items:center;gap:10px;padding:12px;margin-bottom:12px;border-radius:10px;background:#1d3a5f;cursor:pointer">'
+      +'<span style="font-size:22px">▶️</span><span style="flex:1;color:#fff"><span style="display:block;font-size:13px;font-weight:800">Voir l\'animation du parcours</span><span style="font-size:11px;opacity:.8">Déplacements + corde + sprint</span></span></div>';
+  }
   if(_testsActifs.detente){
     h+='<div style="margin-bottom:'+(_testsActifs.vitesse?'18px':'0')+'">'
       +'<div style="font-weight:800;font-size:14px;margin-bottom:4px">📏 Test Détente verticale</div>'
@@ -2941,14 +2958,33 @@ function renTestJoueuse(){
       +'</div>';
   }
   if(_testsActifs.vitesse){
+    var sect=function(titre,coul){return '<div style="font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:'+coul+';margin:14px 0 6px;padding-bottom:3px;border-bottom:2px solid '+coul+'">'+titre+'</div>';};
+    var champP=function(id,ph){return '<span class="label">❤️ '+ph+' (bpm)</span><input type="number" inputmode="numeric" id="'+id+'" placeholder="Ex : 120" style="margin-bottom:8px">';};
+    var champT=function(id){return '<span class="label">⏱ Temps réalisé (secondes)</span><input type="number" inputmode="numeric" id="'+id+'" placeholder="Ex : 85" style="margin-bottom:8px">';};
     h+='<div>'
       +'<div style="font-weight:800;font-size:14px;margin-bottom:4px">⚡ Test Vitesse / Endurance</div>'
-      +'<div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:8px">Prends tes pulsations (15 sec × 4) avant et après le test. Suis la fiche pour le parcours.</div>'
-      +'<div onclick="ouvrirImage(BASE_TESTS+\'test-vitesse.jpg\',\'Test Vitesse\')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;margin-bottom:10px;border-radius:8px;background:#eaf1f8;border:1.5px solid #2e6da4;cursor:pointer;font-size:12px;font-weight:700;color:#1d3a5f">📋 Voir la fiche du test</div>'
-      +'<span class="label">❤️ Pulsations avant (repos, bpm)</span>'
-      +'<input type="number" inputmode="numeric" id="tv-repos" placeholder="Ex : 65" style="margin-bottom:8px">'
-      +'<span class="label">❤️ Pulsations après effort (bpm)</span>'
-      +'<input type="number" inputmode="numeric" id="tv-effort" placeholder="Ex : 145" style="margin-bottom:8px">'
+      +'<div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:8px">Suis la fiche et l\'animation. Note tes pulsations (15 sec × 4) et tes temps à chaque étape.</div>'
+      +'<div onclick="ouvrirImage(BASE_TESTS+\'test-vitesse.jpg\',\'Test Vitesse\')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;margin-bottom:6px;border-radius:8px;background:#eaf1f8;border:1.5px solid #2e6da4;cursor:pointer;font-size:12px;font-weight:700;color:#1d3a5f">📋 Voir la fiche du test</div>'
+      // AVANT
+      +sect('Avant de commencer','#64748b')
+      +champP('tv-repos','Pulsations au repos')
+      // PASSAGE 1
+      +sect('Passage 1','#2e6da4')
+      +champT('tv-t1')
+      +champP('tv-p1','Pulsations après passage 1')
+      +'<div style="font-size:11px;color:var(--txt3);font-style:italic;margin-bottom:4px">→ 1min30 de récupération</div>'
+      // PASSAGE 2
+      +sect('Passage 2','#2e6da4')
+      +champT('tv-t2')
+      +champP('tv-p2','Pulsations après passage 2')
+      +'<div style="font-size:11px;color:var(--txt3);font-style:italic;margin-bottom:4px">→ 3min de récupération</div>'
+      // CIRCUIT SQUAT
+      +sect('Circuit Squat','#d4691e')
+      +champP('tv-sq-av','Pulsations avant squat')
+      +champP('tv-sq-ap','Pulsations après circuit squat')
+      // CIRCUIT GAINAGE
+      +sect('Circuit Gainage (2×)','#2e8b57')
+      +champP('tv-ga-ap','Pulsations après circuit gainage')
       +'</div>';
   }
   h+='<span class="label">Ressenti (1 = facile, 10 = très dur)</span>'
@@ -2978,10 +3014,17 @@ function envoyerTest(){
     }
   }
   if(_testsActifs.vitesse){
-    var rep=parseInt(document.getElementById('tv-repos').value);
-    var eff=parseInt(document.getElementById('tv-effort').value);
-    if(!isNaN(rep)) { sbInsert('vbc_tests',{prenom:S.nom,equipe:S.eq,semaine:w,test:'puls_repos',valeur:rep,note:'ressenti '+ress}); envoye++; }
-    if(!isNaN(eff)) { sbInsert('vbc_tests',{prenom:S.nom,equipe:S.eq,semaine:w,test:'puls_effort',valeur:eff,note:''}); envoye++; }
+    var gv=function(id){var v=parseInt(document.getElementById(id).value);return isNaN(v)?null:v;};
+    var champs=[
+      ['puls_repos','tv-repos'],['temps_p1','tv-t1'],['puls_p1','tv-p1'],
+      ['temps_p2','tv-t2'],['puls_p2','tv-p2'],
+      ['puls_squat_av','tv-sq-av'],['puls_squat_ap','tv-sq-ap'],
+      ['puls_gainage_ap','tv-ga-ap']
+    ];
+    champs.forEach(function(c){
+      var v=gv(c[1]);
+      if(v!==null){ sbInsert('vbc_tests',{prenom:S.nom,equipe:S.eq,semaine:w,test:c[0],valeur:v,note:'ressenti '+ress}); envoye++; }
+    });
   }
   if(!envoye){toast('Remplis au moins un test');return;}
   toast('Test envoyé à ton coach ✓');
