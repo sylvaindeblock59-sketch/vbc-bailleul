@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v58</div>
+    <div class="hdr-pill">Été 2026 · v59</div>
   </div>
 </div>
 
@@ -1381,8 +1381,43 @@ let S={
   alts:{},
 };
 
-function loadS(){try{const d=localStorage.getItem('vbc26');if(d)S={...S,...JSON.parse(d)};}catch(e){}}
-function saveS(){try{localStorage.setItem('vbc26',JSON.stringify(S));}catch(e){}}
+function loadS(){
+  try{const d=localStorage.getItem('vbc26');if(d)S={...S,...JSON.parse(d)};}catch(e){}
+  // Si le nom a été effacé (nettoyage iOS), le récupérer depuis les emplacements de secours
+  if(!S.nom || !S.eq){
+    var id=recupererIdentite();
+    if(id){ S.nom=id.nom; S.eq=id.eq; if(id.poste)S.poste=id.poste; if(id.poids)S.poids=id.poids;
+      try{localStorage.setItem('vbc26',JSON.stringify(S));}catch(e){} }
+  }
+}
+function saveS(){
+  try{localStorage.setItem('vbc26',JSON.stringify(S));}catch(e){}
+  // Secours résistant : nom + équipe dans plusieurs emplacements (survit mieux au nettoyage iOS)
+  if(S.nom && S.eq){
+    try{
+      var id=JSON.stringify({nom:S.nom,eq:S.eq,poste:S.poste||'',poids:S.poids||''});
+      localStorage.setItem('vbc-id',id);
+      sessionStorage.setItem('vbc-id',id);
+      document.cookie='vbcid='+encodeURIComponent(id)+';max-age=31536000;path=/;SameSite=Lax';
+    }catch(e){}
+  }
+}
+function recupererIdentite(){
+  // Essaie tous les emplacements jusqu'à retrouver le nom
+  var sources=[];
+  try{ sources.push(localStorage.getItem('vbc-id')); }catch(e){}
+  try{ sources.push(sessionStorage.getItem('vbc-id')); }catch(e){}
+  try{
+    var m=document.cookie.match(/vbcid=([^;]+)/);
+    if(m) sources.push(decodeURIComponent(m[1]));
+  }catch(e){}
+  for(var i=0;i<sources.length;i++){
+    if(sources[i]){
+      try{ var d=JSON.parse(sources[i]); if(d && d.nom && d.eq) return d; }catch(e){}
+    }
+  }
+  return null;
+}
 
 function toast(m){
   const t=document.getElementById('toast');t.textContent=m;t.classList.add('vis');
