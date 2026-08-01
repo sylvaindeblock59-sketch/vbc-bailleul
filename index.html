@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v56</div>
+    <div class="hdr-pill">Été 2026 · v58</div>
   </div>
 </div>
 
@@ -2143,6 +2143,12 @@ restoreRM();
 renAccueil();
 renVideos();
 choisirSeance(S.prog==='B'?'circuit':(S.prog==='C'?'extra':(S.stype||'salle')));
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden && S.nom){
+    if(typeof chargerTestsActifs==='function') chargerTestsActifs(renTestJoueuse);
+    if(typeof chargerCycleMuscu==='function') chargerCycleMuscu(renMuscuJoueuse);
+  }
+});
 // Restaurer le prog switcher
 document.getElementById('prog-A').style.display=S.prog==='A'?'':'none';
 document.getElementById('prog-B').style.display=S.prog==='B'?'':'none';
@@ -3025,11 +3031,7 @@ function majCycleMuscu(){
     nom:(document.getElementById('musc-nom').value||'').trim(),
     debut:document.getElementById('musc-debut').value||''
   };
-  sbPost('vbc_config',{cle:'cycle_muscu',valeur:JSON.stringify(_cycleMuscu)},function(ok){
-    if(!ok){
-      fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.cycle_muscu',{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({valeur:JSON.stringify(_cycleMuscu)})});
-    }
-  });
+  upsertConfig('cycle_muscu', JSON.stringify(_cycleMuscu), null);
   majMuscStatus();
 }
 function majMuscStatus(){
@@ -3137,22 +3139,25 @@ function chargerTestsActifs(cb){
     if(typeof cb==='function') cb();
   });
 }
+function upsertConfig(cle, valeur, cb){
+  fetch(SB_URL+'/rest/v1/vbc_config', {
+    method:'POST',
+    headers:{
+      'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,
+      'Content-Type':'application/json',
+      'Prefer':'resolution=merge-duplicates,return=minimal'
+    },
+    body:JSON.stringify({cle:cle, valeur:valeur, updated_at:new Date().toISOString()})
+  }).then(function(r){ if(cb)cb(r.ok); }).catch(function(){ if(cb)cb(false); });
+}
 function majTestsActifs(){
   _testsActifs = {
     detente: document.getElementById('tact-detente').checked,
     vitesse: document.getElementById('tact-vitesse').checked,
     bonus: document.getElementById('tact-bonus') ? document.getElementById('tact-bonus').checked : false
   };
-  // upsert dans vbc_config
-  sbPost('vbc_config', {cle:'tests_actifs', valeur:JSON.stringify(_testsActifs)}, function(ok){
-    if(!ok){
-      // si existe déjà, PATCH
-      fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.tests_actifs',{
-        method:'PATCH',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-        body:JSON.stringify({valeur:JSON.stringify(_testsActifs)})
-      });
-    }
+  upsertConfig('tests_actifs', JSON.stringify(_testsActifs), function(ok){
+    if(!ok) toast('\u26A0 Enregistrement du test incertain, réessaie');
   });
   majTestStatus();
 }
