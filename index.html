@@ -164,7 +164,7 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 .ps-btn.on.A{border-color:var(--grn);background:var(--grn-bg)}
 .ps-btn.on.B{border-color:var(--org);background:var(--org-bg)}
 .ps-btn.on.C{border-color:#2e6da4;background:#e8f0f8}
-.coach-tuiles{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}
+.coach-tuiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
 .ctuile{background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .15s}
 .ctuile.on{background:var(--pri);border-color:var(--pri)}
 .ctuile.on .ct-lb{color:#fff}.ctuile.on .ct-ic{filter:none}
@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v54</div>
+    <div class="hdr-pill">Été 2026 · v56</div>
   </div>
 </div>
 
@@ -342,6 +342,10 @@ window.onerror = function(msg, url, line) {
   <div class="card" id="mp-card" style="display:none">
     <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Ma progression</div>
     <div id="mp-body"></div>
+  </div>
+  <div class="card" id="muscu-card" style="display:none;border:2px solid #d4691e">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M4 9v6M20 9v6"/></svg>Ma séance Musculation</div>
+    <div id="muscu-body"></div>
   </div>
   <div class="card" id="test-card" style="display:none;border:2px solid var(--pri)">
     <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Test physique demandé par ton coach</div>
@@ -774,6 +778,7 @@ window.onerror = function(msg, url, line) {
       <div class="ctuile" data-go="tests" onclick="coachSection('tests')"><div class="ct-ic">🎯</div><div class="ct-lb">Tests</div></div>
       <div class="ctuile" data-go="presences" onclick="coachSection('presences')"><div class="ct-ic">✅</div><div class="ct-lb">Présences</div></div>
       <div class="ctuile" data-go="donnees" onclick="coachSection('donnees')"><div class="ct-ic">🗂️</div><div class="ct-lb">Données</div></div>
+      <div class="ctuile" data-go="muscu" onclick="coachSection('muscu')"><div class="ct-ic">🏋️</div><div class="ct-lb">Muscu</div></div>
       <div class="ctuile" data-go="effectif" onclick="coachSection('effectif')"><div class="ct-ic">👥</div><div class="ct-lb">Effectif</div></div>
     </div>
     <div class="card" data-sec="suivi">
@@ -874,6 +879,24 @@ window.onerror = function(msg, url, line) {
       <div class="info-box">Qui a envoyé quoi, et qui n'a rien synchronisé récemment. Vérifiable depuis ton téléphone.</div>
       <div id="ed-liste"></div>
       <button onclick="chargerEtatData()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
+    </div>
+    <div class="card" data-sec="muscu">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M4 9v6M20 9v6M2 10.5v3M22 10.5v3"/></svg>Cycle Musculation (saison)</div>
+      <div class="info-box">Active le cycle muscu de la saison régulière. Choisis la date de début : les séances seront comptées à partir de là.</div>
+      <label style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;border:1.5px solid var(--bdr);cursor:pointer;background:var(--card);margin-bottom:10px">
+        <input type="checkbox" id="musc-actif" onchange="majCycleMuscu()" style="width:20px;height:20px;accent-color:var(--pri)">
+        <span style="flex:1"><span style="display:block;font-size:14px;font-weight:800">🏋️ Activer le cycle Musculation</span><span style="font-size:11px;color:var(--txt2)">Débloque la validation muscu chez les joueuses</span></span>
+      </label>
+      <span class="label">Nom du cycle en cours</span>
+      <input type="text" id="musc-nom" placeholder="Ex : Explosivité" style="margin-bottom:8px" onchange="majCycleMuscu()">
+      <span class="label">Date de début du cycle</span>
+      <input type="date" id="musc-debut" style="margin-bottom:8px" onchange="majCycleMuscu()">
+      <div id="musc-status" style="font-size:11px;color:var(--txt3);margin-top:4px"></div>
+    </div>
+    <div class="card" data-sec="muscu">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Suivi Musculation</div>
+      <div id="musc-suivi"></div>
+      <button onclick="chargerSuiviMuscu()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
     </div>
     <div class="card" data-sec="effectif">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Gérer l'effectif</div>
@@ -1828,6 +1851,7 @@ function renAccueil(){
   renCheckin();
   renMaProgression();
   chargerTestsActifs(renTestJoueuse);
+  chargerCycleMuscu(renMuscuJoueuse);
   const tot=Object.keys(S.done).length;const pct=Math.round(tot/16*100);
   document.getElementById('h-done').textContent=tot;
   document.getElementById('h-pct').textContent=pct+'%';
@@ -2237,6 +2261,8 @@ function coachSection(sec){
 }
 function renCoachDash() {
   setTimeout(function(){coachSection(_coachSec);},50);
+  chargerCycleMuscu();
+  chargerSuiviMuscu();
   chargerTestsActifs();
   chargerResultatsTests();
   renPrListe();
@@ -2515,7 +2541,7 @@ function chargerClassement() {
   sbGetCache('vbc_seances', 'order=semaine.asc&limit=800', function(seances, ok) {
     var pres = null;
     sbGetCache('vbc_presences', 'limit=800', function(prows) {
-      var data = (seances || []).filter(function(s){ return s.type_seance !== 'extra'; });
+      var data = (seances || []).filter(function(s){ return s.type_seance !== 'extra' && s.type_seance !== 'muscu'; });
       if (_stFiltre !== 'all') data = data.filter(function(s){return s.equipe === _stFiltre;});
       var byN = {};
       data.forEach(function(s) {
@@ -2680,7 +2706,7 @@ function chargerStats() {
   chargerProgression();
   chargerCourbeData();
   sbGetCache('vbc_seances', 'order=created_at.asc&limit=500', function(seances, ok, cacheTs) {
-    seances = (seances || []).filter(function(s){ return s.type_seance !== 'extra'; });
+    seances = (seances || []).filter(function(s){ return s.type_seance !== 'extra' && s.type_seance !== 'muscu'; });
     if (_stFiltre !== 'all') seances = seances.filter(function(s){return s.equipe === _stFiltre;});
     var kpiNote = ok ? '' : noteCache((seances && seances.length) ? cacheTs : null);
     if (!seances || !seances.length) {
@@ -2952,7 +2978,7 @@ function chargerPrResume() {
     h += '<div style="display:flex;gap:5px;margin-bottom:10px">';
     [['semaine','Semaine'],['mois','Mois'],['saison','Saison']].forEach(function(p){
       var on = _prPeriode===p[0];
-      h += '<button onclick="_prPeriode=\''+p[0]+'\';renPrResume()" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid '+(on?'var(--pri)':'var(--bdr)')+';background:'+(on?'var(--pri)':'var(--card)')+';color:'+(on?'#fff':'var(--txt2)')+';font-size:11px;font-weight:700;cursor:pointer">'+p[1]+'</button>';
+      h += '<button onclick="_prPeriode=\''+p[0]+'\';chargerPrResume()" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid '+(on?'var(--pri)':'var(--bdr)')+';background:'+(on?'var(--pri)':'var(--card)')+';color:'+(on?'#fff':'var(--txt2)')+';font-size:11px;font-weight:700;cursor:pointer">'+p[1]+'</button>';
     });
     h += '</div>';
     // Totaux équipe
@@ -2981,6 +3007,73 @@ function chargerPrResume() {
   });
 }
 var _prPeriode = 'mois';
+var _cycleMuscu = {actif:false, nom:'', debut:''};
+function chargerCycleMuscu(cb){
+  sbGet('vbc_config','cle=eq.cycle_muscu',function(rows){
+    if(rows && rows.length && rows[0].valeur){ try{ _cycleMuscu=JSON.parse(rows[0].valeur); }catch(e){} }
+    var ca=document.getElementById('musc-actif'), cn=document.getElementById('musc-nom'), cd=document.getElementById('musc-debut');
+    if(ca) ca.checked=!!_cycleMuscu.actif;
+    if(cn) cn.value=_cycleMuscu.nom||'';
+    if(cd) cd.value=_cycleMuscu.debut||'';
+    majMuscStatus();
+    if(typeof cb==='function') cb();
+  });
+}
+function majCycleMuscu(){
+  _cycleMuscu={
+    actif:document.getElementById('musc-actif').checked,
+    nom:(document.getElementById('musc-nom').value||'').trim(),
+    debut:document.getElementById('musc-debut').value||''
+  };
+  sbPost('vbc_config',{cle:'cycle_muscu',valeur:JSON.stringify(_cycleMuscu)},function(ok){
+    if(!ok){
+      fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.cycle_muscu',{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({valeur:JSON.stringify(_cycleMuscu)})});
+    }
+  });
+  majMuscStatus();
+}
+function majMuscStatus(){
+  var el=document.getElementById('musc-status'); if(!el)return;
+  if(_cycleMuscu.actif){
+    var d=_cycleMuscu.debut?(' \u00b7 depuis le '+_cycleMuscu.debut.split('-').reverse().join('/')):'';
+    el.innerHTML='\uD83D\uDFE2 Cycle <strong>'+(_cycleMuscu.nom||'Musculation')+'</strong> actif'+d;
+  } else el.innerHTML='\u26AA Cycle inactif.';
+}
+function chargerSuiviMuscu(){
+  var el=document.getElementById('musc-suivi'); if(!el)return;
+  el.innerHTML='<div style="font-size:12px;color:var(--txt3)">Chargement\u2026</div>';
+  sbGet('vbc_seances','type_seance=eq.muscu&order=date_seance.desc&limit=800',function(rows){
+    rows=(rows||[]);
+    if(_stFiltre!=='all')rows=rows.filter(function(r){return r.equipe===_stFiltre;});
+    if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:8px 0">Aucune s\u00e9ance muscu valid\u00e9e.</div>';return;}
+    // Filtrer depuis la date de début du cycle
+    var deb=_cycleMuscu.debut?new Date(_cycleMuscu.debut):null;
+    function apresDebut(dstr){
+      if(!deb)return true;
+      var p=(dstr||'').split('/'); // JJ/MM/AAAA
+      if(p.length!==3)return true;
+      return new Date(p[2],p[1]-1,p[0])>=deb;
+    }
+    var byP={};
+    rows.forEach(function(r){
+      if(!apresDebut(r.date_seance))return;
+      if(!byP[r.prenom])byP[r.prenom]={eq:r.equipe,n:0};
+      byP[r.prenom].n++;
+    });
+    var noms=Object.keys(byP);
+    var total=noms.reduce(function(s,n){return s+byP[n].n;},0);
+    var h='<div style="background:var(--grn-bg);border-radius:8px;padding:9px;text-align:center;margin-bottom:10px"><div style="font-size:20px;font-weight:900;color:var(--grn)">'+total+'</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">S\u00e9ances muscu \u00b7 '+(_cycleMuscu.nom||'cycle')+'</div></div>';
+    ['f','m'].forEach(function(eq){
+      var grp=noms.filter(function(n){return byP[n].eq===eq;}).map(function(n){return {n:n,v:byP[n].n};}).sort(function(a,b){return b.v-a.v;});
+      if(!grp.length)return;
+      h+='<div style="font-weight:800;font-size:11px;text-transform:uppercase;color:var(--txt2);margin:8px 0 4px">'+(eq==='f'?'\u2640 N2F':'\u2642 N3M')+'</div>';
+      grp.forEach(function(r){
+        h+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--bdr)"><span style="font-weight:700">'+r.n+'</span><strong style="color:var(--grn)">'+r.v+' s\u00e9ance'+(r.v>1?'s':'')+'</strong></div>';
+      });
+    });
+    el.innerHTML=h;
+  });
+}
 var _testsActifs = {detente:false, vitesse:false};
 var BASE_TESTS = BASE_FICHES; // fiches de test hébergées à la racine GitHub
 
@@ -3178,6 +3271,38 @@ function envoyerTest(){
   toast('Test envoyé à ton coach ✓');
   var body=document.getElementById('test-body');
   body.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:32px">✅</div><div style="font-weight:800;font-size:14px;margin-top:6px">Test envoyé, merci !</div><div style="font-size:12px;color:var(--txt2)">Ton coach a reçu tes résultats.</div></div>';
+}
+function renMuscuJoueuse(){
+  var card=document.getElementById('muscu-card'), body=document.getElementById('muscu-body');
+  if(!card||!body)return;
+  if(!S.nom||!_cycleMuscu.actif){card.style.display='none';return;}
+  // Compter les muscu déjà faites cette semaine (clé par semaine ISO simple : numéro de semaine calendaire)
+  var maintenant=new Date();
+  var lundi=new Date(maintenant); lundi.setDate(maintenant.getDate()-((maintenant.getDay()+6)%7)); lundi.setHours(0,0,0,0);
+  var faitCetteSem=false;
+  Object.keys(S.muscuDone||{}).forEach(function(k){
+    var d=new Date(S.muscuDone[k]); if(d>=lundi)faitCetteSem=true;
+  });
+  var h='<div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:10px">Cycle en cours : <strong style="color:#d4691e">'+(_cycleMuscu.nom||'Musculation')+'</strong>. Valide ta séance muscu de la semaine quand tu l\'as faite.</div>';
+  if(faitCetteSem){
+    h+='<div style="background:var(--grn-bg);border-radius:8px;padding:12px;text-align:center"><div style="font-size:24px">\u2705</div><div style="font-size:13px;font-weight:800;color:var(--grn);margin-top:4px">Muscu validée cette semaine !</div></div>';
+  } else {
+    h+='<button class="btn" onclick="validerMuscu()" style="background:#d4691e;color:#fff;margin-bottom:0">\uD83C\uDFCB J\'ai fait ma muscu cette semaine \u2713</button>';
+  }
+  card.style.display='block';
+  body.innerHTML=h;
+}
+function validerMuscu(){
+  if(!S.nom||!S.eq){toast('Choisis ton nom dans Profil');return;}
+  var w=S.week||1;
+  var dte=new Date().toLocaleDateString('fr-FR');
+  var data={prenom:S.nom,equipe:S.eq,semaine:w,type_seance:'muscu',feeling:0,note:_cycleMuscu.nom||'Muscu',date_seance:dte};
+  sbPost('vbc_seances',data,function(ok){ if(!ok)queueLocale('vbc_seances',data); });
+  S.muscuDone=S.muscuDone||{};
+  S.muscuDone['M'+Date.now()]=new Date().toISOString();
+  saveS();
+  toast('Muscu enregistrée \u2713');
+  renMuscuJoueuse();
 }
 function renMaProgression() {
   var card = document.getElementById('mp-card');
