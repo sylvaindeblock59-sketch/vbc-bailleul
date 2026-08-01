@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v51</div>
+    <div class="hdr-pill">Été 2026 · v54</div>
   </div>
 </div>
 
@@ -816,6 +816,10 @@ window.onerror = function(msg, url, line) {
         <label style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;border:1.5px solid var(--bdr);cursor:pointer;background:var(--card)">
           <input type="checkbox" id="tact-vitesse" onchange="majTestsActifs()" style="width:20px;height:20px;accent-color:var(--pri)">
           <span style="flex:1"><span style="display:block;font-size:14px;font-weight:800">⚡ Test Vitesse / Endurance</span><span style="font-size:11px;color:var(--txt2)">Parcours + pulsations avant/après</span></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:10px;border:1.5px dashed #d4691e;cursor:pointer;background:#fff8e6;margin-left:14px">
+          <input type="checkbox" id="tact-bonus" onchange="majTestsActifs()" style="width:18px;height:18px;accent-color:#d4691e">
+          <span style="flex:1"><span style="display:block;font-size:12px;font-weight:800;color:#8a4b12">🎁 Test gratifiant</span><span style="font-size:10px;color:var(--txt2)">Le test vitesse compte comme une séance (bonus)</span></span>
         </label>
       </div>
       <div id="tact-status" style="font-size:11px;color:var(--txt3);margin-top:6px"></div>
@@ -2918,24 +2922,65 @@ function validerPresences() {
 function chargerPrResume() {
   var el = document.getElementById('pr-resume');
   if (!el) return;
-  sbGetCache('vbc_presences', 'order=date_entrainement.desc&limit=300', function(rows, ok) {
-    if (!rows || !rows.length) { el.innerHTML = ''; return; }
-    var byD = {};
-    rows.forEach(function(r) {
-      var k = r.date_entrainement + '|' + r.equipe;
-      if (!byD[k]) byD[k] = {p:0, t:0, d:r.date_entrainement, eq:r.equipe};
-      byD[k].t++;
-      if (r.present) byD[k].p++;
+  sbGetCache('vbc_presences', 'order=date_entrainement.desc&limit=1500', function(rows, ok) {
+    if (!rows || !rows.length) { el.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:8px 0">Aucune présence enregistrée.</div>'; return; }
+    // Filtre par période
+    var now = new Date();
+    function dansPeriode(dstr){
+      if(_prPeriode==='saison') return true;
+      var parts = (dstr||'').split('-'); // AAAA-MM-JJ (format input date)
+      if(parts.length!==3) return true;
+      var d = new Date(parts[0], parts[1]-1, parts[2]);
+      var diff = (now - d)/86400000;
+      if(_prPeriode==='semaine') return diff <= 7;
+      if(_prPeriode==='mois') return diff <= 31;
+      return true;
+    }
+    var rowsF = rows.filter(function(r){ return dansPeriode(r.date_entrainement); });
+    // Nombre d'entraînements distincts par équipe + présences par joueur
+    var seances = {f:{}, m:{}};   // dates distinctes
+    var parJoueur = {};           // prenom -> {eq, present}
+    rowsF.forEach(function(r){
+      if(seances[r.equipe]) seances[r.equipe][r.date_entrainement]=true;
+      if(!parJoueur[r.prenom]) parJoueur[r.prenom]={eq:r.equipe, present:0};
+      if(r.present) parJoueur[r.prenom].present++;
     });
-    var keys = Object.keys(byD).sort().reverse().slice(0,5);
-    var h = '<div style="font-weight:800;font-size:12px;margin-bottom:6px">Derniers entra\u00eenements</div>';
-    keys.forEach(function(k) {
-      var v = byD[k];
-      h += '<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--bdr)"><span>'+v.d+' \u00b7 '+(v.eq==='f'?'\u2640 N2F':'\u2642 N3M')+'</span><strong>'+v.p+'/'+v.t+' pr\u00e9sents</strong></div>';
+    var nbF = Object.keys(seances.f).length, nbM = Object.keys(seances.m).length;
+
+    var h = '';
+    // Sélecteur de période
+    h += '<div style="display:flex;gap:5px;margin-bottom:10px">';
+    [['semaine','Semaine'],['mois','Mois'],['saison','Saison']].forEach(function(p){
+      var on = _prPeriode===p[0];
+      h += '<button onclick="_prPeriode=\''+p[0]+'\';renPrResume()" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid '+(on?'var(--pri)':'var(--bdr)')+';background:'+(on?'var(--pri)':'var(--card)')+';color:'+(on?'#fff':'var(--txt2)')+';font-size:11px;font-weight:700;cursor:pointer">'+p[1]+'</button>';
+    });
+    h += '</div>';
+    // Totaux équipe
+    h += '<div style="display:flex;gap:8px;margin-bottom:12px">'
+      + '<div style="flex:1;background:var(--grn-bg);border-radius:8px;padding:9px;text-align:center"><div style="font-size:20px;font-weight:900;color:var(--grn)">'+nbF+'</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">\u2640 Entraîn. N2F</div></div>'
+      + '<div style="flex:1;background:#eaf1f8;border-radius:8px;padding:9px;text-align:center"><div style="font-size:20px;font-weight:900;color:#2e6da4">'+nbM+'</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">\u2642 Entraîn. N3M</div></div>'
+      + '</div>';
+    // Assiduité individuelle (classée)
+    ['f','m'].forEach(function(eq){
+      var nbTot = eq==='f'?nbF:nbM;
+      var joueurs = Object.keys(parJoueur).filter(function(n){return parJoueur[n].eq===eq;})
+                          .map(function(n){return {n:n, p:parJoueur[n].present};})
+                          .sort(function(a,b){return b.p-a.p;});
+      if(!joueurs.length) return;
+      h += '<div style="font-weight:800;font-size:11px;text-transform:uppercase;color:var(--txt2);margin:10px 0 4px">'+(eq==='f'?'\u2640 N2F':'\u2642 N3M')+'</div>';
+      joueurs.forEach(function(j){
+        var pct = nbTot>0 ? Math.round(j.p/nbTot*100) : 0;
+        var coul = pct>=80?'var(--grn)':pct>=50?'#d4691e':'var(--acc)';
+        h += '<div style="margin-bottom:7px">'
+          + '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span style="font-weight:700">'+j.n+'</span><span style="color:'+coul+';font-weight:800">'+j.p+'/'+nbTot+' ('+pct+'%)</span></div>'
+          + '<div style="height:6px;background:var(--bdr);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+coul+';border-radius:4px"></div></div>'
+          + '</div>';
+      });
     });
     el.innerHTML = h;
   });
 }
+var _prPeriode = 'mois';
 var _testsActifs = {detente:false, vitesse:false};
 var BASE_TESTS = BASE_FICHES; // fiches de test hébergées à la racine GitHub
 
@@ -2991,17 +3036,19 @@ function chargerTestsActifs(cb){
       try{ _testsActifs = JSON.parse(rows[0].valeur); }catch(e){}
     }
     // refléter dans les cases coach
-    var cd=document.getElementById('tact-detente'), cv=document.getElementById('tact-vitesse');
+    var cd=document.getElementById('tact-detente'), cv=document.getElementById('tact-vitesse'), cbon=document.getElementById('tact-bonus');
     if(cd) cd.checked = !!_testsActifs.detente;
     if(cv) cv.checked = !!_testsActifs.vitesse;
+    if(cbon) cbon.checked = !!_testsActifs.bonus;
     majTestStatus();
-    if(cb) cb();
+    if(typeof cb==='function') cb();
   });
 }
 function majTestsActifs(){
   _testsActifs = {
     detente: document.getElementById('tact-detente').checked,
-    vitesse: document.getElementById('tact-vitesse').checked
+    vitesse: document.getElementById('tact-vitesse').checked,
+    bonus: document.getElementById('tact-bonus') ? document.getElementById('tact-bonus').checked : false
   };
   // upsert dans vbc_config
   sbPost('vbc_config', {cle:'tests_actifs', valeur:JSON.stringify(_testsActifs)}, function(ok){
@@ -3121,11 +3168,11 @@ function envoyerTest(){
     });
   }
   if(!envoye){toast('Remplis au moins un test');return;}
-  // Le test compte comme une séance Extérieur
-  if(!S.done['S'+w+'-ext']){
+  // Le test VITESSE gratifiant compte comme une séance (type distinct test_vitesse)
+  if(_testsActifs.vitesse && _testsActifs.bonus && !S.done['S'+w+'-test_vitesse']){
     var dSea=new Date().toLocaleDateString('fr-FR');
-    sbInsert('vbc_seances',{prenom:S.nom,equipe:S.eq,semaine:w,type_seance:'ext',feeling:ress||0,note:'Test physique',date_seance:dSea});
-    S.done['S'+w+'-ext']={feel:ress||0,date:dSea,prog:'A'};
+    sbInsert('vbc_seances',{prenom:S.nom,equipe:S.eq,semaine:w,type_seance:'test_vitesse',feeling:ress||0,note:'Test vitesse (bonus)',date_seance:dSea});
+    S.done['S'+w+'-test_vitesse']={feel:ress||0,date:dSea,prog:'A'};
     saveS();
   }
   toast('Test envoyé à ton coach ✓');
@@ -3286,30 +3333,33 @@ function ouvrirFicheJoueuse(nom) {
       +'<div style="font-size:12px;color:var(--txt2)">'+total+' séances validées</div>'
       +'</div>';
     html += '<div style="height:8px;background:var(--bdr);border-radius:4px;overflow:hidden;margin-bottom:16px"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div>';
-    var icons = {salle:'&#127947;', ext:'&#127939;', circuit:'&#9889;', extra:'&#128692;'};
-    var labels = {salle:'Salle', ext:'Extérieur', circuit:'Circuit', extra:'Extra Time'};
+    var icons = {salle:'&#127947;', ext:'&#127939;', circuit:'&#9889;', extra:'&#128692;', test_vitesse:'&#127950;'};
+    var labels = {salle:'Salle', ext:'Extérieur', circuit:'Circuit', extra:'Extra Time', test_vitesse:'Test vitesse'};
 
     // ══ RADAR : profil d'entraînement ══
-    var cnt = {salle:0, ext:0, circuit:0, extra:0};
+    var cnt = {salle:0, ext:0, circuit:0, extra:0, test_vitesse:0};
     seances.forEach(function(s){ if(cnt[s.type_seance]!=null) cnt[s.type_seance]++; });
     var axes = [
-      {k:'salle',   lbl:'Salle',   col:'#1d3a5f'},
-      {k:'ext',     lbl:'Extér.',  col:'#2e6da4'},
-      {k:'circuit', lbl:'Circuit', col:'#d4691e'},
-      {k:'extra',   lbl:'Extra',   col:'#2e8b57'}
+      {k:'salle',        lbl:'Salle',   col:'#1d3a5f'},
+      {k:'ext',          lbl:'Extér.',  col:'#2e6da4'},
+      {k:'circuit',      lbl:'Circuit', col:'#d4691e'},
+      {k:'extra',        lbl:'Extra',   col:'#2e8b57'},
+      {k:'test_vitesse', lbl:'Test',    col:'#8b5cf6'}
     ];
-    var maxV = Math.max(1, cnt.salle, cnt.ext, cnt.circuit, cnt.extra);
+    var NA = axes.length;
+    var maxV = Math.max(1, cnt.salle, cnt.ext, cnt.circuit, cnt.extra, cnt.test_vitesse);
     var CX=110, CY=105, R=72;
     function pt(i, ratio){
-      var a = (Math.PI*2*i/4) - Math.PI/2;
+      var a = (Math.PI*2*i/NA) - Math.PI/2;
       return [CX + Math.cos(a)*R*ratio, CY + Math.sin(a)*R*ratio];
     }
     var svg = '<svg viewBox="0 0 220 210" style="width:100%;max-width:250px;display:block;margin:0 auto">';
+    var idxAll=[]; for(var ia=0;ia<NA;ia++) idxAll.push(ia);
     [0.25,0.5,0.75,1].forEach(function(g){
-      var p = [0,1,2,3].map(function(i){ var c=pt(i,g); return c[0].toFixed(1)+','+c[1].toFixed(1); }).join(' ');
+      var p = idxAll.map(function(i){ var c=pt(i,g); return c[0].toFixed(1)+','+c[1].toFixed(1); }).join(' ');
       svg += '<polygon points="'+p+'" fill="none" stroke="#e2e8f0" stroke-width="1"/>';
     });
-    [0,1,2,3].forEach(function(i){
+    idxAll.forEach(function(i){
       var c = pt(i,1);
       svg += '<line x1="'+CX+'" y1="'+CY+'" x2="'+c[0].toFixed(1)+'" y2="'+c[1].toFixed(1)+'" stroke="#e2e8f0" stroke-width="1"/>';
     });
@@ -3325,7 +3375,7 @@ function ouvrirFicheJoueuse(nom) {
     });
     svg += '</svg>';
     html += '<div style="font-weight:800;font-size:13px;margin:6px 0 2px">\uD83D\uDCCA Profil d\u2019entra\u00eenement</div>' + svg;
-    var oblig = cnt.salle + cnt.ext + cnt.circuit;
+    var oblig = cnt.salle + cnt.ext + cnt.circuit + cnt.test_vitesse;
     html += '<div style="display:flex;gap:6px;margin:10px 0 16px">'
       + '<div style="flex:1;background:var(--grn-bg);border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+oblig+'</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">Compt\u00e9es pr\u00e9pa</div></div>'
       + '<div style="flex:1;background:#e8f0f8;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:900;color:#2e6da4">'+cnt.extra+'</div><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">Extra bonus</div></div>'
