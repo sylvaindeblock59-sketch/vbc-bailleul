@@ -164,6 +164,12 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 .ps-btn.on.A{border-color:var(--grn);background:var(--grn-bg)}
 .ps-btn.on.B{border-color:var(--org);background:var(--org-bg)}
 .ps-btn.on.C{border-color:#2e6da4;background:#e8f0f8}
+.coach-tuiles{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}
+.ctuile{background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .15s}
+.ctuile.on{background:var(--pri);border-color:var(--pri)}
+.ctuile.on .ct-lb{color:#fff}.ctuile.on .ct-ic{filter:none}
+.ct-ic{font-size:20px;line-height:1.2}
+.ct-lb{font-size:10px;font-weight:700;color:var(--txt2);margin-top:2px}
 .test-alerte{background:linear-gradient(90deg,#dc2626,#ef4444);color:#fff;font-size:15px;font-weight:900;text-align:center;padding:12px;border-radius:10px;margin-bottom:14px;animation:pulseAlerte 1.4s ease-in-out infinite}
 @keyframes pulseAlerte{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.75;transform:scale(1.02)}}
 .prog-switch{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -305,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v48</div>
+    <div class="hdr-pill">Été 2026 · v51</div>
   </div>
 </div>
 
@@ -763,11 +769,18 @@ window.onerror = function(msg, url, line) {
       <div class="met"><div class="met-l">Joueuses actives</div><div class="met-v" id="c-tot">0</div><div class="met-s">dans le groupe</div></div>
       <div class="met"><div class="met-l">Séances validées</div><div class="met-v" id="c-done">0</div><div class="met-s">toutes équipes</div></div>
     </div>
-    <div class="card">
+    <div class="coach-tuiles">
+      <div class="ctuile on" data-go="suivi" onclick="coachSection('suivi')"><div class="ct-ic">📊</div><div class="ct-lb">Suivi</div></div>
+      <div class="ctuile" data-go="tests" onclick="coachSection('tests')"><div class="ct-ic">🎯</div><div class="ct-lb">Tests</div></div>
+      <div class="ctuile" data-go="presences" onclick="coachSection('presences')"><div class="ct-ic">✅</div><div class="ct-lb">Présences</div></div>
+      <div class="ctuile" data-go="donnees" onclick="coachSection('donnees')"><div class="ct-ic">🗂️</div><div class="ct-lb">Données</div></div>
+      <div class="ctuile" data-go="effectif" onclick="coachSection('effectif')"><div class="ct-ic">👥</div><div class="ct-lb">Effectif</div></div>
+    </div>
+    <div class="card" data-sec="suivi">
       <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Suivi temps réel</div>
       <div id="c-suivi"><div style="font-size:12px;color:var(--txt2)">Chargement...</div></div>
     </div>
-    <div class="card">
+    <div class="card" data-sec="suivi">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Gérer les équipes</div>
       <div class="sec" style="margin-top:0">Equipe féminine N2F</div>
       <div id="c-fem"></div>
@@ -786,13 +799,13 @@ window.onerror = function(msg, url, line) {
         <button class="btn btn-pri" onclick="addPlayer()" style="margin-bottom:0">Ajouter &#10003;</button>
       </div>
     </div>
-    <div class="card">
+    <div class="card" data-sec="suivi">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Bien-être du groupe</div>
       <div class="info-box">Check-ins quotidiens des joueuses — les scores les plus bas en premier.</div>
       <div id="be-liste"></div>
       <button onclick="chargerBienEtre()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
     </div>
-    <div class="card">
+    <div class="card" data-sec="tests">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Demander un test aux joueuses</div>
       <div class="info-box">Active un test : il apparaîtra chez tes joueuses qui saisiront leurs valeurs. Désactive-le quand c'est terminé.</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
@@ -807,7 +820,13 @@ window.onerror = function(msg, url, line) {
       </div>
       <div id="tact-status" style="font-size:11px;color:var(--txt3);margin-top:6px"></div>
     </div>
-    <div class="card">
+    <div class="card" data-sec="tests">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Résultats des tests</div>
+      <div class="info-box">Qui a fait le test et ses valeurs. Compare détente, temps et récupération cardiaque.</div>
+      <div id="tres-liste"></div>
+      <button onclick="chargerResultatsTests()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser les résultats</button>
+    </div>
+    <div class="card" data-sec="tests">
       <div class="card-title"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Saisie manuelle (coach)</div>
       <div class="info-box">Pour entrer un résultat toi-même. La progression apparaît dans chaque fiche.</div>
       <span class="label">Test</span>
@@ -828,7 +847,7 @@ window.onerror = function(msg, url, line) {
       <input type="number" inputmode="decimal" step="0.1" id="tst-val" placeholder="Ex : 42" style="margin-bottom:10px">
       <button class="btn btn-grn" onclick="validerTest()" style="margin-bottom:0">Enregistrer le test &#10003;</button>
     </div>
-    <div class="card">
+    <div class="card" data-sec="presences">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Présences entraînement</div>
       <div class="info-box">Coche les présentes, valide — le taux de présence apparaît dans chaque fiche.</div>
       <span class="label">Date de l'entraînement</span>
@@ -838,17 +857,21 @@ window.onerror = function(msg, url, line) {
         <button onclick="prSetEq('f')" id="pr-eq-f" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--pri);background:var(--pri);color:#fff;font-size:11px;font-weight:700;cursor:pointer">&#9792; N2F</button>
         <button onclick="prSetEq('m')" id="pr-eq-m" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--bdr);background:var(--card);color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">&#9794; N3M</button>
       </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button onclick="prTous(true)" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--grn);background:var(--grn-bg);color:var(--grn);font-size:11px;font-weight:700;cursor:pointer">✓ Tout présent</button>
+        <button onclick="prTous(false)" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--bdr);background:var(--bg);color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">Tout absent</button>
+      </div>
       <div id="pr-liste" style="margin-bottom:10px"></div>
       <button class="btn btn-grn" onclick="validerPresences()" style="margin-bottom:0">Valider les présences &#10003;</button>
       <div id="pr-resume" style="margin-top:12px"></div>
     </div>
-    <div class="card">
+    <div class="card" data-sec="donnees">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>État des données</div>
       <div class="info-box">Qui a envoyé quoi, et qui n'a rien synchronisé récemment. Vérifiable depuis ton téléphone.</div>
       <div id="ed-liste"></div>
       <button onclick="chargerEtatData()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
     </div>
-    <div class="card">
+    <div class="card" data-sec="effectif">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Gérer l'effectif</div>
       <div class="info-box">Ajoute ou retire un joueur — tous les téléphones se mettent à jour automatiquement.</div>
       <span class="label">Ajouter : prénom (et nom)</span>
@@ -861,7 +884,7 @@ window.onerror = function(msg, url, line) {
       <button class="btn btn-grn" onclick="ajouterJoueur()" style="margin-bottom:14px">Ajouter à l'effectif &#10003;</button>
       <div id="ef-liste"></div>
     </div>
-    <div class="card">
+    <div class="card" data-sec="effectif">
       <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saisir une séance passée</div>
       <div class="info-box">Pour rattraper les séances effectuées avant la mise à jour.</div>
       <span class="label">Joueuse</span>
@@ -895,7 +918,7 @@ window.onerror = function(msg, url, line) {
       </div>
       <button class="btn btn-grn" onclick="validerRetro()">Enregistrer &#10003;</button>
     </div>
-    <div class="card">
+    <div class="card" data-sec="effectif">
       <div class="card-title">Actions</div>
       <button class="btn btn-grn" onclick="chargerPreset()" style="margin-bottom:8px">&#10003; Restaurer liste N2F</button>
       <button class="btn" onclick="exportCoachData()" style="margin-bottom:8px">&#11015; Exporter (JSON)</button>
@@ -2057,16 +2080,26 @@ function loadMesSeances() {
   sbGetCache('vbc_charges', 'prenom=eq.'+encodeURIComponent(S.nom)+'&order=semaine.asc', function(chs, ok2) {
     if (!chs || !chs.length) return;
     S.charges = S.charges || {};
-    var aj = 0;
+    S.rm = S.rm || {};
+    var aj = 0, ajRM = 0;
     chs.forEach(function(c) {
-      if (!c.semaine || !c.exercice || c.charge == null) return;
+      if (c.charge == null || !c.exercice) return;
+      // Restaurer les 1RM (semaine 0, exercice RM-xxx)
+      if (c.semaine === 0 && c.exercice.indexOf('RM-') === 0) {
+        var exRM = c.exercice.slice(3);
+        if (S.rm[exRM] == null) { S.rm[exRM] = c.charge; ajRM++; }
+        return;
+      }
+      if (!c.semaine) return;
       var key = 'S' + c.semaine + '-' + c.exercice;
       if (S.charges[key] == null || S.charges[key] === '') { S.charges[key] = c.charge; aj++; }
     });
-    if (aj > 0) {
+    if (aj > 0 || ajRM > 0) {
       saveS();
       _chgHist = null; // forcer le rechargement des rappels "dernière fois"
+      if (ajRM > 0) restoreRM();
       if (S.prog === 'A') renProgA();
+      if (ajRM > 0) toast('Tes 1RM sont restaurés \u2713');
     }
   });
 }
@@ -2190,8 +2223,18 @@ function renStats() {
   }
 }
 
+var _coachSec = 'suivi';
+function coachSection(sec){
+  _coachSec = sec;
+  var tuiles = document.querySelectorAll('.ctuile');
+  for(var i=0;i<tuiles.length;i++){ tuiles[i].classList.toggle('on', tuiles[i].getAttribute('data-go')===sec); }
+  var cards = document.querySelectorAll('#coach-dash [data-sec]');
+  for(var j=0;j<cards.length;j++){ cards[j].style.display = (cards[j].getAttribute('data-sec')===sec)?'':'none'; }
+}
 function renCoachDash() {
+  setTimeout(function(){coachSection(_coachSec);},50);
   chargerTestsActifs();
+  chargerResultatsTests();
   renPrListe();
   chargerPrResume();
   chargerBienEtre();
@@ -2854,6 +2897,11 @@ function renPrListe() {
   el.innerHTML = h;
 }
 function prToggle(nom) { _prAbs[nom] = !_prAbs[nom]; renPrListe(); }
+function prTous(present){
+  var ps=(S.players||[]).filter(function(p){return p.eq===_prEq && p.active!==false;});
+  ps.forEach(function(p){ _prAbs[p.name]=!present; });
+  renPrListe();
+}
 function validerPresences() {
   var d = document.getElementById('pr-date').value;
   if (!d) { toast('Choisis une date'); return; }
@@ -2891,6 +2939,52 @@ function chargerPrResume() {
 var _testsActifs = {detente:false, vitesse:false};
 var BASE_TESTS = BASE_FICHES; // fiches de test hébergées à la racine GitHub
 
+function chargerResultatsTests(){
+  var el=document.getElementById('tres-liste');
+  if(!el)return;
+  el.innerHTML='<div style="font-size:12px;color:var(--txt3)">Chargement\u2026</div>';
+  sbGet('vbc_tests','order=created_at.desc&limit=800',function(rows){
+    rows=(rows||[]);
+    if(_stFiltre!=='all')rows=rows.filter(function(r){return r.equipe===_stFiltre;});
+    if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:8px 0">Aucun test envoy\u00e9 pour le moment.</div>';return;}
+    // Regrouper par joueuse : dernières valeurs de chaque type
+    var byP={};
+    rows.forEach(function(r){
+      if(!byP[r.prenom])byP[r.prenom]={eq:r.equipe,v:{},date:r.created_at};
+      if(byP[r.prenom].v[r.test]==null)byP[r.prenom].v[r.test]=r.valeur; // le plus récent (déjà trié desc)
+    });
+    var noms=Object.keys(byP);
+    // ══ Comparaison : meilleurs ══
+    function best(champ,mini){
+      var arr=noms.filter(function(n){return byP[n].v[champ]!=null;})
+                  .map(function(n){return {n:n,val:byP[n].v[champ]};});
+      if(!arr.length)return null;
+      arr.sort(function(a,b){return mini?a.val-b.val:b.val-a.val;});
+      return arr[0];
+    }
+    var bDet=best('detente',false), bT1=best('temps_p1',true);
+    var h='';
+    if(bDet||bT1){
+      h+='<div style="display:flex;gap:8px;margin-bottom:12px">';
+      if(bDet)h+='<div style="flex:1;background:var(--grn-bg);border-radius:8px;padding:9px;text-align:center"><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">\uD83C\uDFC6 Meilleure détente</div><div style="font-size:14px;font-weight:900;color:var(--grn)">'+bDet.val+' cm</div><div style="font-size:10px;color:var(--txt2)">'+bDet.n+'</div></div>';
+      if(bT1)h+='<div style="flex:1;background:#eaf1f8;border-radius:8px;padding:9px;text-align:center"><div style="font-size:9px;font-weight:700;color:var(--txt2);text-transform:uppercase">\u26A1 Meilleur temps P1</div><div style="font-size:14px;font-weight:900;color:#2e6da4">'+bT1.val+' s</div><div style="font-size:10px;color:var(--txt2)">'+bT1.n+'</div></div>';
+      h+='</div>';
+    }
+    // ══ Liste détaillée par joueuse ══
+    ['f','m'].forEach(function(eq){
+      var grp=noms.filter(function(n){return byP[n].eq===eq;});
+      if(!grp.length)return;
+      h+='<div style="font-weight:800;font-size:11px;text-transform:uppercase;color:var(--txt2);margin:10px 0 4px">'+(eq==='f'?'\u2640 N2F':'\u2642 N3M')+'</div>';
+      grp.forEach(function(n){
+        var v=byP[n].v;
+        var ligne=function(lbl,val,unit){return val!=null?'<span style="display:inline-block;background:var(--bg);border-radius:6px;padding:2px 7px;margin:2px 3px 2px 0;font-size:11px"><strong>'+lbl+'</strong> '+val+unit+'</span>':'';};
+        var contenu=ligne('Détente',v.detente,' cm')+ligne('Repos',v.puls_repos,' bpm')+ligne('T.P1',v.temps_p1,' s')+ligne('Puls.P1',v.puls_p1,'')+ligne('T.P2',v.temps_p2,' s')+ligne('Puls.P2',v.puls_p2,'')+ligne('Squat av',v.puls_squat_av,'')+ligne('Squat ap',v.puls_squat_ap,'')+ligne('Gainage',v.puls_gainage_ap,'');
+        h+='<div style="padding:8px 0;border-bottom:1px solid var(--bdr)"><div style="font-size:13px;font-weight:800;margin-bottom:2px">'+n+'</div><div>'+(contenu||'<span style="font-size:11px;color:var(--txt3)">valeurs partielles</span>')+'</div></div>';
+      });
+    });
+    el.innerHTML=h;
+  });
+}
 function chargerTestsActifs(cb){
   sbGet('vbc_config', 'cle=eq.tests_actifs', function(rows){
     if(rows && rows.length && rows[0].valeur){
@@ -3027,6 +3121,13 @@ function envoyerTest(){
     });
   }
   if(!envoye){toast('Remplis au moins un test');return;}
+  // Le test compte comme une séance Extérieur
+  if(!S.done['S'+w+'-ext']){
+    var dSea=new Date().toLocaleDateString('fr-FR');
+    sbInsert('vbc_seances',{prenom:S.nom,equipe:S.eq,semaine:w,type_seance:'ext',feeling:ress||0,note:'Test physique',date_seance:dSea});
+    S.done['S'+w+'-ext']={feel:ress||0,date:dSea,prog:'A'};
+    saveS();
+  }
   toast('Test envoyé à ton coach ✓');
   var body=document.getElementById('test-body');
   body.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:32px">✅</div><div style="font-weight:800;font-size:14px;margin-top:6px">Test envoyé, merci !</div><div style="font-size:12px;color:var(--txt2)">Ton coach a reçu tes résultats.</div></div>';
