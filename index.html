@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v59</div>
+    <div class="hdr-pill">Été 2026 · v61</div>
   </div>
 </div>
 
@@ -1225,7 +1225,7 @@ const SALLE_P1 = [
 
 // Exercices salle \u2014 Phase 2 (6 exo, explosivité)
 const SALLE_P2 = [
-  {id:'s2a',cat:'Jambes',nom:'Squat sauté sur box',reps:'3 \u00D7 6 EXPLOSIF',x:'sq',pf:.50,pm:.50,df:'15\u201325',dm:'45\u201360',
+  {id:'s2a',cat:'Jambes',nom:'Squat sauté sur box',reps:'3 \u00D7 6 EXPLOSIF',df:'poids du corps',dm:'10\u201320',
    note:'Réception amortie, gainage actif',
    alt:['Broad jump','Squat jump bodyweight'],
    vid:'https://youtu.be/52r_Ul5k03g'},
@@ -1233,7 +1233,7 @@ const SALLE_P2 = [
    note:'Dos plat, barre proche des cuisses',
    alt:['Good morning','Nordic curl'],
    vid:'https://youtu.be/JCXUYuzwNrM'},
-  {id:'s2c',cat:'Haut du corps',nom:'Développé couché explosif',reps:'3 \u00D7 6',x:'bp',pf:.65,pm:.65,df:'15\u201325',dm:'45\u201360',
+  {id:'s2c',cat:'Haut du corps',nom:'Développé couché explosif',reps:'3 \u00D7 6',df:'20\u201330',dm:'40\u201350',
    note:'Phase positive rapide et puissante',
    alt:['Lancer médecine-ball au mur'],
    vid:'https://youtu.be/rT7DgCr-3pg'},
@@ -1241,7 +1241,7 @@ const SALLE_P2 = [
    note:'Amplitude complète, sans balancer',
    alt:['Tirage horizontal','Rowing haltère'],
    vid:'https://youtu.be/CAwf7n6Luuc'},
-  {id:'s2e',cat:'Épaules',nom:'Push press explosif',reps:'3 \u00D7 6 L/R',x:'ohp',pf:.45,pm:.45,df:'6\u201310',dm:'16\u201322',
+  {id:'s2e',cat:'Épaules',nom:'Push press explosif',reps:'3 \u00D7 6 L/R',df:'6\u201310',dm:'16\u201322',
    note:'Légère impulsion des jambes, extension bras rapide',
    alt:['Développé haltères rapide','Jerk haltère'],
    vid:'https://youtu.be/2yjwXTZQDDI'},
@@ -1535,7 +1535,8 @@ function getLoad(ex){
   if(ex.x&&S.rm[ex.x]){
     const pct=eq==='f'?(ex.pf||.60):(ex.pm||ex.pf||.60);
     const kg=Math.round(S.rm[ex.x]*pct);
-    return{f:`${kg} kg`,m:`${kg} kg`,calc:true,sub:`${Math.round(pct*100)}% 1RM`};
+    // Charge personnelle : on affiche UNE seule valeur (celle de la joueuse), pas une comparaison f/m
+    return{perso:`${kg} kg`,calc:true,sub:`${Math.round(pct*100)}% de ton 1RM`};
   }
   const noU=s=>['poids','genoux','standard','bâton','assisté','haltères','bouteilles'].some(x=>s.toLowerCase().includes(x));
   const df=ex.df||'\u2014';const dm=ex.dm||'\u2014';
@@ -1608,13 +1609,20 @@ function exoNom(id) {
 }
 function loadHTML(ex){
   const L=getLoad(ex);
+  // Charge personnelle calculée depuis le 1RM de la joueuse -> une seule valeur (la sienne)
+  if(L.perso){
+    return`<div class="ex-loads">
+      <div class="load-lbl">\uD83C\uDFAF Ta charge</div>
+      <span class="load-calc" style="font-size:16px">${L.perso}</span>
+      <div style="font-size:9px;color:var(--txt2);margin-top:2px">${L.sub}</div>
+    </div>`;
+  }
   if(!ex.df&&!ex.dm) return '';
   return`<div class="ex-loads">
     <div class="load-lbl">\u2640 N2F</div>
-    <span class="${L.calc?'load-calc':'load-f'} load-f">${L.f}</span>
+    <span class="load-f">${L.f}</span>
     <div class="load-lbl" style="margin-top:5px">\u2642 N3M</div>
-    <span class="${L.calc?'load-calc':'load-m'} load-m">${L.m}</span>
-    ${L.calc?`<div style="font-size:9px;color:var(--txt2);margin-top:2px">${L.sub}</div>`:''}
+    <span class="load-m">${L.m}</span>
   </div>`;
 }
 
@@ -3175,15 +3183,18 @@ function chargerTestsActifs(cb){
   });
 }
 function upsertConfig(cle, valeur, cb){
-  fetch(SB_URL+'/rest/v1/vbc_config', {
-    method:'POST',
-    headers:{
-      'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,
-      'Content-Type':'application/json',
-      'Prefer':'resolution=merge-duplicates,return=minimal'
-    },
-    body:JSON.stringify({cle:cle, valeur:valeur, updated_at:new Date().toISOString()})
-  }).then(function(r){ if(cb)cb(r.ok); }).catch(function(){ if(cb)cb(false); });
+  var H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+  // 1) Supprimer l'ancienne valeur, 2) insérer la nouvelle (garanti sans dépendre d'une contrainte)
+  fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.'+encodeURIComponent(cle), {method:'DELETE', headers:H})
+  .then(function(){
+    return fetch(SB_URL+'/rest/v1/vbc_config', {
+      method:'POST',
+      headers:Object.assign({}, H, {'Prefer':'return=minimal'}),
+      body:JSON.stringify({cle:cle, valeur:valeur, updated_at:new Date().toISOString()})
+    });
+  })
+  .then(function(r){ if(cb)cb(r.ok); })
+  .catch(function(){ if(cb)cb(false); });
 }
 function majTestsActifs(){
   _testsActifs = {
@@ -3192,7 +3203,8 @@ function majTestsActifs(){
     bonus: document.getElementById('tact-bonus') ? document.getElementById('tact-bonus').checked : false
   };
   upsertConfig('tests_actifs', JSON.stringify(_testsActifs), function(ok){
-    if(!ok) toast('\u26A0 Enregistrement du test incertain, réessaie');
+    if(ok) toast('\u2705 Test enregistré sur le serveur');
+    else toast('\u26A0 Échec enregistrement, vérifie ta connexion');
   });
   majTestStatus();
 }
