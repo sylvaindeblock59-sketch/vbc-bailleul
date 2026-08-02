@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v61</div>
+    <div class="hdr-pill">Été 2026 · v62</div>
   </div>
 </div>
 
@@ -879,6 +879,12 @@ window.onerror = function(msg, url, line) {
       <div class="info-box">Qui a envoyé quoi, et qui n'a rien synchronisé récemment. Vérifiable depuis ton téléphone.</div>
       <div id="ed-liste"></div>
       <button onclick="chargerEtatData()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
+    </div>
+    <div class="card" data-sec="donnees">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Bilan de fiabilité</div>
+      <div class="info-box">Contrôle complet par joueur : séances (prépa/extra/muscu), 1RM et tests enregistrés sur le serveur. Pour vérifier que rien n'est perdu.</div>
+      <div id="bilan-liste"></div>
+      <button onclick="chargerBilanFiabilite()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Lancer le bilan</button>
     </div>
     <div class="card" data-sec="muscu">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M4 9v6M20 9v6M2 10.5v3M22 10.5v3"/></svg>Cycle Musculation (saison)</div>
@@ -2875,6 +2881,60 @@ function toggleJoueur(nom) {
   sbInsert('vbc_players', {id:'chg-'+Date.now(), name:p.name, equipe:p.eq, active:p.active});
   toast(p.name.split(' ')[0] + (p.active ? ' r\u00e9int\u00e9gr\u00e9' : ' retir\u00e9') + ' \u2713');
   renEffectif(); renPrListe();
+}
+function chargerBilanFiabilite(){
+  var el=document.getElementById('bilan-liste');
+  if(!el)return;
+  el.innerHTML='<div style="font-size:12px;color:var(--txt3)">Analyse en cours\u2026</div>';
+  var bilan={};
+  function ensure(nom,eq){ if(!bilan[nom])bilan[nom]={eq:eq||'?',prepa:0,extra:0,muscu:0,rm:0,charges:0,tests:0}; return bilan[nom]; }
+  // 1) Séances
+  sbGet('vbc_seances','order=prenom.asc&limit=2000',function(seances){
+    (seances||[]).forEach(function(s){
+      var b=ensure(s.prenom,s.equipe);
+      if(s.type_seance==='extra')b.extra++;
+      else if(s.type_seance==='muscu')b.muscu++;
+      else b.prepa++;
+    });
+    // 2) Charges
+    sbGet('vbc_charges','order=prenom.asc&limit=3000',function(charges){
+      (charges||[]).forEach(function(c){
+        var b=ensure(c.prenom,c.equipe);
+        if(c.semaine===0 && (c.exercice||'').indexOf('RM-')===0)b.rm++;
+        else if(c.charge!=null)b.charges++;
+      });
+      // 3) Tests
+      sbGet('vbc_tests','order=prenom.asc&limit=2000',function(tests){
+        (tests||[]).forEach(function(t){ ensure(t.prenom,t.equipe).tests++; });
+        // Rendu
+        var noms=Object.keys(bilan).sort();
+        if(_stFiltre!=='all')noms=noms.filter(function(n){return bilan[n].eq===_stFiltre;});
+        if(!noms.length){el.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:8px 0">Aucune donnée.</div>';return;}
+        var h='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">';
+        h+='<tr style="border-bottom:2px solid var(--bdr);text-align:left"><th style="padding:4px 3px">Joueur</th><th style="text-align:center">Prépa</th><th style="text-align:center">Extra</th><th style="text-align:center">Muscu</th><th style="text-align:center">1RM</th><th style="text-align:center">Tests</th></tr>';
+        ['f','m'].forEach(function(eq){
+          var grp=noms.filter(function(n){return bilan[n].eq===eq;});
+          if(!grp.length)return;
+          h+='<tr><td colspan="6" style="padding:6px 3px 2px;font-weight:800;color:var(--txt2)">'+(eq==='f'?'\u2640 N2F':'\u2642 N3M')+'</td></tr>';
+          grp.forEach(function(n){
+            var b=bilan[n];
+            var vide=(b.prepa+b.extra+b.muscu+b.rm+b.tests)===0;
+            h+='<tr style="border-bottom:1px solid var(--bdr)'+(vide?';opacity:.5':'')+'">'
+              +'<td style="padding:5px 3px;font-weight:700">'+n+(vide?' \u26A0':'')+'</td>'
+              +'<td style="text-align:center;font-weight:800;color:var(--pri)">'+b.prepa+'</td>'
+              +'<td style="text-align:center;color:#2e6da4">'+b.extra+'</td>'
+              +'<td style="text-align:center;color:#d4691e">'+b.muscu+'</td>'
+              +'<td style="text-align:center;color:var(--grn)">'+b.rm+'</td>'
+              +'<td style="text-align:center;color:#8b5cf6">'+b.tests+'</td>'
+              +'</tr>';
+          });
+        });
+        h+='</table></div>';
+        h+='<div style="font-size:10px;color:var(--txt3);margin-top:8px">\u26A0 = aucune donnée sur le serveur (joueur inactif ou données non synchronisées). Prépa = séances comptées. Extra/Muscu = bonus hors prépa.</div>';
+        el.innerHTML=h;
+      });
+    });
+  });
 }
 function chargerEtatData() {
   var el = document.getElementById('ed-liste');
