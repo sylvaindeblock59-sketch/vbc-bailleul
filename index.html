@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v62</div>
+    <div class="hdr-pill">Été 2026 · v64</div>
   </div>
 </div>
 
@@ -886,6 +886,12 @@ window.onerror = function(msg, url, line) {
       <div id="bilan-liste"></div>
       <button onclick="chargerBilanFiabilite()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Lancer le bilan</button>
     </div>
+    <div class="card" data-sec="donnees">
+      <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Journal d'accès</div>
+      <div class="info-box">Toutes les tentatives d'accès à l'espace coach et stats (réussies ✅ et échouées ❌), avec la date et l'appareil.</div>
+      <div id="acces-liste"></div>
+      <button onclick="chargerJournalAcces()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Voir le journal</button>
+    </div>
     <div class="card" data-sec="muscu">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M4 9v6M20 9v6M2 10.5v3M22 10.5v3"/></svg>Cycle Musculation (saison)</div>
       <div class="info-box">Active le cycle muscu de la saison régulière. Choisis la date de début : les séances seront comptées à partir de là.</div>
@@ -955,6 +961,7 @@ window.onerror = function(msg, url, line) {
       <div class="card-title">Actions</div>
       <button class="btn btn-grn" onclick="chargerPreset()" style="margin-bottom:8px">&#10003; Restaurer liste N2F</button>
       <button class="btn" onclick="exportCoachData()" style="margin-bottom:8px">&#11015; Exporter (JSON)</button>
+      <button class="btn" onclick="changerCodeCoach()" style="margin-bottom:8px;color:var(--pri);border-color:var(--pri)">&#128273; Changer le code coach</button>
       <button class="btn" onclick="resetCoachData()" style="color:var(--acc);border-color:var(--acc)">&#8635; Remettre à zéro</button>
     </div>
   </div>
@@ -2203,8 +2210,28 @@ document.getElementById('prog-A').style.display=S.prog==='A'?'':'none';
 document.getElementById('prog-B').style.display=S.prog==='B'?'':'none';
 
 
-var _PIN = '1723';
+var _PIN = '1723';  // valeur par défaut, écrasée par le serveur si un code perso existe
 var _pins = {cp: '', sp: ''};
+// Charger le code coach depuis le serveur au démarrage
+function chargerCodeCoach(){
+  sbGet('vbc_config','cle=eq.code_coach',function(rows){
+    if(rows && rows.length && rows[0].valeur){ _PIN = String(rows[0].valeur).trim() || '1723'; }
+  });
+}
+chargerCodeCoach();
+function changerCodeCoach(){
+  var nouv = prompt('Nouveau code coach (4 chiffres) :');
+  if(nouv === null) return;
+  nouv = String(nouv).trim();
+  if(!/^[0-9]{4}$/.test(nouv)){ toast('Le code doit faire 4 chiffres'); return; }
+  var conf = prompt('Confirme le nouveau code :');
+  if(conf === null) return;
+  if(String(conf).trim() !== nouv){ toast('Les codes ne correspondent pas'); return; }
+  upsertConfig('code_coach', nouv, function(ok){
+    if(ok){ _PIN = nouv; toast('\u2705 Nouveau code enregistré'); }
+    else { toast('\u26A0 Échec, réessaie'); }
+  });
+}
 
 function pinTap(id, d) {
   if (_pins[id].length >= 4) return;
@@ -2229,8 +2256,51 @@ function updDots(id) {
   }
 }
 
+function deviceId(){
+  var d='';
+  try{ d=localStorage.getItem('vbc-device'); }catch(e){}
+  if(!d){ d='D'+Math.random().toString(36).slice(2,7).toUpperCase(); try{localStorage.setItem('vbc-device',d);}catch(e){} }
+  return d;
+}
+function logAcces(type, succes){
+  var data={type:type, succes:succes, device:deviceId()+(S.nom?(' / '+S.nom):'')};
+  fetch(SB_URL+'/rest/v1/vbc_access_log',{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify(data)
+  }).catch(function(){});
+}
+function chargerJournalAcces(){
+  var el=document.getElementById('acces-liste');
+  if(!el)return;
+  el.innerHTML='<div style="font-size:12px;color:var(--txt3)">Chargement\u2026</div>';
+  sbGet('vbc_access_log','order=created_at.desc&limit=50',function(rows){
+    rows=(rows||[]);
+    if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:8px 0">Aucune tentative enregistrée.</div>';return;}
+    // Compter les échecs des dernières 48h
+    var now=Date.now(), echecs48=0;
+    rows.forEach(function(r){
+      if(!r.succes){ var t=new Date(r.created_at).getTime(); if(now-t < 172800000) echecs48++; }
+    });
+    var h='';
+    if(echecs48>0){
+      h+='<div style="background:#fdecea;border:1.5px solid var(--acc);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--acc);font-weight:700">\u26A0 '+echecs48+' tentative'+(echecs48>1?'s':'')+' échouée'+(echecs48>1?'s':'')+' ces dernières 48h</div>';
+    }
+    rows.forEach(function(r){
+      var d=new Date(r.created_at);
+      var quand=d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      var ic=r.succes?'\u2705':'\u274C';
+      var lbl=r.type==='cp'?'Coach':(r.type==='sp'?'Stats':r.type);
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--bdr)">'
+        +'<span>'+ic+' <strong>'+lbl+'</strong> <span style="color:var(--txt3)">'+(r.device||'')+'</span></span>'
+        +'<span style="color:var(--txt3);font-size:11px">'+quand+'</span></div>';
+    });
+    el.innerHTML=h;
+  });
+}
 function pinOK(id) {
   if (_pins[id] === _PIN) {
+    logAcces(id, true);
     if (id === 'cp') {
       S.coachUnlocked = true;
       var lock = document.getElementById('coach-lock');
@@ -2251,6 +2321,7 @@ function pinOK(id) {
     _pins[id] = '';
     updDots(id);
   } else {
+    logAcces(id, false);
     var err = document.getElementById(id+'-err');
     if (err) { err.style.display = 'block'; setTimeout(function() { err.style.display = 'none'; }, 2000); }
     _pins[id] = '';
@@ -2316,6 +2387,7 @@ function coachSection(sec){
 }
 function renCoachDash() {
   setTimeout(function(){coachSection(_coachSec);},50);
+  chargerJournalAcces();
   chargerCycleMuscu();
   chargerSuiviMuscu();
   chargerTestsActifs();
