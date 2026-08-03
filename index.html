@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v67</div>
+    <div class="hdr-pill">Été 2026 · v68</div>
   </div>
 </div>
 
@@ -3383,9 +3383,8 @@ function chargerTestsActifs(cb){
 }
 function upsertConfig(cle, valeur, cb){
   var H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
-  // 1) DELETE l'ancienne (on ignore le résultat), 2) INSERT la nouvelle
   fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.'+encodeURIComponent(cle), {method:'DELETE', headers:H})
-  .catch(function(){ /* ignore, on tente l'insert quand même */ })
+  .catch(function(){})
   .then(function(){
     return fetch(SB_URL+'/rest/v1/vbc_config', {
       method:'POST',
@@ -3395,9 +3394,15 @@ function upsertConfig(cle, valeur, cb){
   })
   .then(function(r){
     if(r && r.ok){ if(cb)cb(true); }
-    else { if(r){ r.text().then(function(t){ console.error('upsertConfig POST fail', r.status, t); }); } if(cb)cb(false); }
+    else if(r){
+      r.text().then(function(t){
+        console.error('upsertConfig POST fail', r.status, t);
+        toast('Erreur '+r.status+' : '+(t||'').slice(0,60));
+      });
+      if(cb)cb(false);
+    } else { if(cb)cb(false); }
   })
-  .catch(function(e){ console.error('upsertConfig error', e); if(cb)cb(false); });
+  .catch(function(e){ console.error('upsertConfig error', e); toast('Erreur réseau'); if(cb)cb(false); });
 }
 function majTestsActifs(){
   _testsActifs = {
