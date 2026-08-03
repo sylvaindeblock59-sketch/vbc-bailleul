@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v64</div>
+    <div class="hdr-pill">Été 2026 · v67</div>
   </div>
 </div>
 
@@ -961,6 +961,7 @@ window.onerror = function(msg, url, line) {
       <div class="card-title">Actions</div>
       <button class="btn btn-grn" onclick="chargerPreset()" style="margin-bottom:8px">&#10003; Restaurer liste N2F</button>
       <button class="btn" onclick="exportCoachData()" style="margin-bottom:8px">&#11015; Exporter (JSON)</button>
+      <button class="btn" onclick="gererSaisons()" style="margin-bottom:8px;color:#2e8b57;border-color:#2e8b57">&#127942; Gérer les saisons</button>
       <button class="btn" onclick="changerCodeCoach()" style="margin-bottom:8px;color:var(--pri);border-color:var(--pri)">&#128273; Changer le code coach</button>
       <button class="btn" onclick="resetCoachData()" style="color:var(--acc);border-color:var(--acc)">&#8635; Remettre à zéro</button>
     </div>
@@ -1070,7 +1071,12 @@ var PLAYERS_PRESET=[
 var SB_URL='https://arajyyfqrpjxpwuqzsxw.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyYWp5eWZxcnBqeHB3dXF6c3h3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzc2NTksImV4cCI6MjA5NTkxMzY1OX0.xK_Z_IZfsq8tOyRwYQiGFTpi6rapJXbwIDTqcsh-Juo';
 
+var TABLES_SAISON = ['vbc_seances','vbc_charges','vbc_tests','vbc_presences','vbc_players'];
 function sbPost(table, data, cb) {
+  // Tagger automatiquement avec la saison active (sauf si déjà présent)
+  if(TABLES_SAISON.indexOf(table)>=0 && data && typeof data==='object' && data.saison==null){
+    data.saison = SAISON;
+  }
   var xhr = new XMLHttpRequest();
   xhr.open('POST', SB_URL+'/rest/v1/'+table, true);
   xhr.setRequestHeader('apikey', SB_KEY);
@@ -1118,6 +1124,10 @@ var VID_DEADBUG = 'https://youtu.be/mUMVASv0x7U';
 var TABLES_CLUB = ['vbc_seances','vbc_players','vbc_charges','vbc_presences','vbc_checkins','vbc_tests'];
 function sbGet(table, params, cb) {
   if (TABLES_CLUB.indexOf(table) >= 0) params = (params ? params+'&' : '') + 'club=is.null';
+  // Filtrer par saison active (sauf si la requête cible déjà une saison, ex. historique)
+  if (TABLES_SAISON.indexOf(table) >= 0 && (!params || params.indexOf('saison=')<0)) {
+    params = (params ? params+'&' : '') + 'saison=eq.' + encodeURIComponent(SAISON);
+  }
   var q = params ? '?'+params : '';
   var xhr = new XMLHttpRequest();
   xhr.open('GET', SB_URL+'/rest/v1/'+table+q, true);
@@ -2211,6 +2221,14 @@ document.getElementById('prog-B').style.display=S.prog==='B'?'':'none';
 
 
 var _PIN = '1723';  // valeur par défaut, écrasée par le serveur si un code perso existe
+var SAISON = '2026-27';  // saison active — toutes les nouvelles données y sont rattachées
+function chargerSaison(cb){
+  sbGet('vbc_config','cle=eq.saison_active',function(rows){
+    if(rows && rows.length && rows[0].valeur){ SAISON = String(rows[0].valeur).trim() || '2026-27'; }
+    var e=document.getElementById('cfg-saison'); if(e) e.textContent=SAISON;
+    if(typeof cb==='function') cb();
+  });
+}
 var _pins = {cp: '', sp: ''};
 // Charger le code coach depuis le serveur au démarrage
 function chargerCodeCoach(){
@@ -2219,6 +2237,55 @@ function chargerCodeCoach(){
   });
 }
 chargerCodeCoach();
+chargerSaison();
+function gererSaisons(){
+  var choix = prompt('SAISON ACTIVE : '+SAISON+'\n\nQue veux-tu faire ?\n\n1 = Voir/changer la saison affichée (consulter historique)\n2 = DÉMARRER une nouvelle saison (archive l\'actuelle, repart à neuf)\n\nTape 1 ou 2 :');
+  if(choix===null) return;
+  choix=String(choix).trim();
+  if(choix==='1'){ consulterSaison(); }
+  else if(choix==='2'){ demarrerNouvelleSaison(); }
+}
+function consulterSaison(){
+  sbGet('vbc_seances','select=saison&saison=neq.___&limit=1000',function(rows){
+    // Récupérer les saisons distinctes
+    var saisons={};
+    (rows||[]).forEach(function(r){ if(r.saison)saisons[r.saison]=true; });
+    var liste=Object.keys(saisons).sort().reverse();
+    if(!liste.length) liste=[SAISON];
+    var s=prompt('Saisons disponibles :\n'+liste.join('\n')+'\n\nTape le nom de la saison à consulter :', SAISON);
+    if(s===null) return;
+    s=s.trim();
+    if(!s) return;
+    SAISON=s;
+    var e=document.getElementById('cfg-saison'); if(e)e.textContent=SAISON;
+    // Ne PAS sauvegarder comme saison active serveur (juste consultation locale)
+    toast('Affichage saison '+s);
+    renCoachDash();
+  });
+}
+function demarrerNouvelleSaison(){
+  var nouv=prompt('Nom de la NOUVELLE saison (ex : 2027-28) :');
+  if(nouv===null) return;
+  nouv=nouv.trim();
+  if(!/^[0-9]{4}-[0-9]{2}$/.test(nouv)){ toast('Format attendu : 2027-28'); return; }
+  if(nouv===SAISON){ toast('Cette saison est déjà active'); return; }
+  var conf=confirm('DÉMARRER LA SAISON '+nouv+' ?\n\n\u2022 La saison '+SAISON+' sera archivée (consultable)\n\u2022 L\'effectif sera vidé (tu ré-ajouteras tes joueurs)\n\u2022 Les 1RM et compteurs repartent à zéro\n\u2022 Rien n\'est supprimé, tout reste dans l\'historique\n\nConfirmer ?');
+  if(!conf) return;
+  // Enregistrer la nouvelle saison active sur le serveur
+  upsertConfig('saison_active', nouv, function(ok){
+    if(ok){
+      SAISON=nouv;
+      // Réinitialiser l'état local (nouveau départ)
+      S.done={}; S.rm={}; S.charges={}; S.muscuDone={};
+      saveS();
+      var e=document.getElementById('cfg-saison'); if(e)e.textContent=SAISON;
+      alert('\u2705 Saison '+nouv+' démarrée !\n\nTu peux maintenant ajouter tes joueurs pour cette nouvelle saison. L\'ancienne reste consultable via "Gérer les saisons".');
+      renCoachDash();
+    } else {
+      toast('\u26A0 Échec, réessaie');
+    }
+  });
+}
 function changerCodeCoach(){
   var nouv = prompt('Nouveau code coach (4 chiffres) :');
   if(nouv === null) return;
@@ -3316,8 +3383,9 @@ function chargerTestsActifs(cb){
 }
 function upsertConfig(cle, valeur, cb){
   var H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
-  // 1) Supprimer l'ancienne valeur, 2) insérer la nouvelle (garanti sans dépendre d'une contrainte)
+  // 1) DELETE l'ancienne (on ignore le résultat), 2) INSERT la nouvelle
   fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.'+encodeURIComponent(cle), {method:'DELETE', headers:H})
+  .catch(function(){ /* ignore, on tente l'insert quand même */ })
   .then(function(){
     return fetch(SB_URL+'/rest/v1/vbc_config', {
       method:'POST',
@@ -3325,8 +3393,11 @@ function upsertConfig(cle, valeur, cb){
       body:JSON.stringify({cle:cle, valeur:valeur, updated_at:new Date().toISOString()})
     });
   })
-  .then(function(r){ if(cb)cb(r.ok); })
-  .catch(function(){ if(cb)cb(false); });
+  .then(function(r){
+    if(r && r.ok){ if(cb)cb(true); }
+    else { if(r){ r.text().then(function(t){ console.error('upsertConfig POST fail', r.status, t); }); } if(cb)cb(false); }
+  })
+  .catch(function(e){ console.error('upsertConfig error', e); if(cb)cb(false); });
 }
 function majTestsActifs(){
   _testsActifs = {
@@ -3334,9 +3405,24 @@ function majTestsActifs(){
     vitesse: document.getElementById('tact-vitesse').checked,
     bonus: document.getElementById('tact-bonus') ? document.getElementById('tact-bonus').checked : false
   };
-  upsertConfig('tests_actifs', JSON.stringify(_testsActifs), function(ok){
-    if(ok) toast('\u2705 Test enregistré sur le serveur');
-    else toast('\u26A0 Échec enregistrement, vérifie ta connexion');
+  var payload = JSON.stringify(_testsActifs);
+  // Sauvegarde locale immédiate (secours)
+  try{ localStorage.setItem('vbc-tests-actifs', payload); }catch(e){}
+  upsertConfig('tests_actifs', payload, function(ok){
+    if(!ok){ toast('\u26A0 Échec enregistrement, vérifie ta connexion'); return; }
+    // VÉRIFICATION : relire le serveur pour confirmer que ça a bien persisté
+    setTimeout(function(){
+      fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.tests_actifs&select=valeur', {
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+      }).then(function(r){ return r.json(); }).then(function(rows){
+        if(rows && rows.length && rows[0].valeur===payload){
+          toast('\u2705 Test bien enregistré et vérifié');
+        } else {
+          toast('\u26A0 L\'enregistrement n\'a pas persisté !');
+          console.error('Vérif test: attendu', payload, 'reçu', rows);
+        }
+      }).catch(function(e){ console.error('Vérif test échec', e); });
+    }, 600);
   });
   majTestStatus();
 }
