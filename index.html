@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v68</div>
+    <div class="hdr-pill">Été 2026 · v69</div>
   </div>
 </div>
 
@@ -2111,6 +2111,8 @@ function _finaliserValidation(prog) {
 };
 
 function sauvetageDonneesLocales() {
+  // DÉSACTIVÉ (v69) : cette fonction créait des doublons. Les données sont déjà sur le serveur.
+  return;
   if (!S.nom || !S.eq) return;
   var deja = false;
   try { deja = localStorage.getItem('vbc-sauvetage-v30') === S.nom; } catch(e) {}
