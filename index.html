@@ -29,7 +29,10 @@
   --r:16px;--rsm:10px;
   --nav:62px;--safe:env(safe-area-inset-bottom,0px);
   --top:env(safe-area-inset-top,0px);
+  --pri-dark:#1a3a5c;--on-pri:#fff;
 }
+body.theme-f{--pri:#b892a8;--acc:#b892a8;--pri-dark:#7a3f5f;--on-pri:#3a2233;}
+body.theme-m{--pri:#1a5fa5;--acc:#1a5fa5;--pri-dark:#1a5fa5;--on-pri:#fff;}
 
 html,body{height:100%;overflow:hidden;background:var(--bg)}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--txt);font-size:15px;line-height:1.55}
@@ -40,8 +43,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
 /* ── HEADER ── */
 .hdr{background:var(--pri);padding-top:var(--top);flex-shrink:0}
 .hdr-inner{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between}
-.hdr-title{color:#fff;font-size:16px;font-weight:700;letter-spacing:-.3px}
-.hdr-sub{color:#7da8c8;font-size:11px;margin-top:1px}
+.hdr-title{color:var(--on-pri);font-size:16px;font-weight:700;letter-spacing:-.3px}
+.hdr-sub{color:var(--on-pri);opacity:.75;font-size:11px;margin-top:1px}
 .hdr-pill{background:var(--acc);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px}
 
 /* ── INSTALL BANNER ── */
@@ -62,7 +65,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
 .nav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border-top:1px solid var(--bdr);padding-bottom:var(--safe);flex-shrink:0}
 .nv{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 7px;cursor:pointer;border:none;background:none;color:var(--txt2);font-size:9px;font-weight:600;letter-spacing:.02em;transition:color .15s;position:relative}
 .nv svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.nv.on{color:var(--pri)}.nv.on svg{stroke:var(--pri)}
+.nv.on{color:var(--pri-dark)}.nv.on svg{stroke:var(--pri-dark)}
 .nv-dot{width:5px;height:5px;background:var(--acc);border-radius:50%;position:absolute;top:7px;right:calc(50% - 14px)}
 
 /* ── CARDS ── */
@@ -167,7 +170,7 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 .coach-tuiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
 .ctuile{background:var(--card);border:1.5px solid var(--bdr);border-radius:12px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .15s}
 .ctuile.on{background:var(--pri);border-color:var(--pri)}
-.ctuile.on .ct-lb{color:#fff}.ctuile.on .ct-ic{filter:none}
+.ctuile.on .ct-lb{color:var(--on-pri)}.ctuile.on .ct-ic{filter:none}
 .ct-ic{font-size:20px;line-height:1.2}
 .ct-lb{font-size:10px;font-weight:700;color:var(--txt2);margin-top:2px}
 .test-alerte{background:linear-gradient(90deg,#dc2626,#ef4444);color:#fff;font-size:15px;font-weight:900;text-align:center;padding:12px;border-radius:10px;margin-bottom:14px;animation:pulseAlerte 1.4s ease-in-out infinite}
@@ -239,7 +242,7 @@ input[type=range]{width:100%;accent-color:var(--pri);margin:5px 0 10px;height:24
 }
 @media(max-width:859px){.pc-sidebar{display:none}}
 
-.st-f.on{background:var(--pri)!important;color:#fff!important;border-color:var(--pri)!important}
+.st-f.on{background:var(--pri)!important;color:var(--on-pri)!important;border-color:var(--pri)!important}
 .pin-dot{width:13px;height:13px;border-radius:50%;background:var(--bdr);transition:all .15s}
 .pin-dot.on{background:var(--pri);transform:scale(1.15)}
 .pin-key{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:15px 0;font-size:20px;font-weight:800;color:var(--txt);border:1.5px solid var(--bdr);border-radius:10px;background:var(--card);cursor:pointer}
@@ -311,7 +314,11 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v70</div>
+    <div class="hdr-pill">Été 2026 · v83</div>
+  </div>
+  <div style="display:flex;gap:6px;padding:0 16px 10px">
+    <button id="eqg-f" onclick="setEquipeGlobale('f')" style="flex:1;padding:8px;border-radius:9px;border:none;background:rgba(255,255,255,.15);color:var(--on-pri);font-size:12px;font-weight:800;cursor:pointer">♀ N2F</button>
+    <button id="eqg-m" onclick="setEquipeGlobale('m')" style="flex:1;padding:8px;border-radius:9px;border:none;background:rgba(255,255,255,.15);color:var(--on-pri);font-size:12px;font-weight:800;cursor:pointer">♂ N3G</button>
   </div>
 </div>
 
@@ -343,10 +350,6 @@ window.onerror = function(msg, url, line) {
     <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Ma progression</div>
     <div id="mp-body"></div>
   </div>
-  <div class="card" id="muscu-card" style="display:none;border:2px solid #d4691e">
-    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M4 9v6M20 9v6"/></svg>Ma séance Musculation</div>
-    <div id="muscu-body"></div>
-  </div>
   <div class="card" id="test-card" style="display:none;border:2px solid var(--pri)">
     <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Test physique demandé par ton coach</div>
     <div id="test-body"></div>
@@ -355,29 +358,23 @@ window.onerror = function(msg, url, line) {
     <div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:800;font-size:13px">Check-in du jour envoyé</div><div style="font-size:11px;color:var(--txt2)">À demain !</div></div></div>
   </div>
 
-  <div class="metrics">
-    <div class="met">
-      <div class="met-l">Programme</div>
-      <div class="met-v">8 sem.</div>
-      <div class="met-s">Juin – Août 2026</div>
-    </div>
-    <div class="met">
-      <div class="met-l">Séances faites</div>
-      <div class="met-v" id="h-done">0</div>
-      <div class="met-s" id="h-done-sub">sur 16 possibles</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Mon programme</div>
-    <div class="sec" style="margin-top:0">Phase 1 — Force & Fondation</div>
-    <div class="wgrid" id="h-dots1"></div>
-    <div class="sec">Phase 2 — Puissance & Transfert</div>
-    <div class="wgrid" id="h-dots2"></div>
-    <div class="sec">Phase 3 — Reprise <span style="font-weight:600;color:var(--txt3);text-transform:none;letter-spacing:0">(à venir)</span></div>
-    <div class="wgrid" id="h-dots3" style="margin-bottom:10px"></div>
-    <div class="prog-row"><span>Progression</span><span id="h-pct">0%</span></div>
-    <div class="prog-bar"><div class="prog-fill" id="h-bar" style="background:var(--grn);width:0%"></div></div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+    <button id="btn-prepa" onclick="go('seance')" style="display:flex;align-items:center;gap:14px;text-align:left;border:none;cursor:pointer;border-radius:14px;padding:16px;background:linear-gradient(135deg,var(--grn),var(--pur));color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12)">
+      <div style="font-size:28px;line-height:1">🏋️</div>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:15px">Préparation Estivale</div>
+        <div style="font-size:11.5px;opacity:.9;margin-top:2px">Programme 8 sem. · <span id="h-done">0</span> séance(s) faite(s) sur 16</div>
+      </div>
+      <div style="font-size:18px;opacity:.85">→</div>
+    </button>
+    <button id="btn-entr" onclick="go('musculation')" style="display:flex;align-items:center;gap:14px;text-align:left;border:none;cursor:pointer;border-radius:14px;padding:16px;background:#d4691e;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12)">
+      <div style="font-size:28px;line-height:1">🏐</div>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:15px">Entraînements</div>
+        <div style="font-size:11.5px;opacity:.9;margin-top:2px">Semaine en cours · Muscu</div>
+      </div>
+      <div style="font-size:18px;opacity:.85">→</div>
+    </button>
   </div>
 
   <div class="card">
@@ -423,6 +420,21 @@ window.onerror = function(msg, url, line) {
 <!-- ══════════════════════════════════
      PAGE : PROFIL
 ══════════════════════════════════ -->
+<!-- ═══════════════════════════════════
+     PAGE : MUSCULATION (Phase 3 — Renforcement saisonnier)
+══════════════════════════════════ -->
+<div id="pg-musculation" class="page">
+  <button class="btn btn-ghost" onclick="go('accueil')" style="margin-bottom:12px;padding:8px;font-size:12px">← Retour à l'accueil</button>
+  <div class="card" id="entr-card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Cette semaine</div>
+    <div id="entr-semaine"></div>
+  </div>
+  <div class="card" id="muscu-card" style="border:2px solid #d4691e">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M4 9v6M20 9v6"/></svg>Musculation / Renforcement Saisonnier</div>
+    <div id="muscu-body"></div>
+  </div>
+</div>
+
 <div id="pg-profil" class="page">
   <div class="card">
     <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Mon profil</div>
@@ -489,6 +501,17 @@ window.onerror = function(msg, url, line) {
      PAGE : SÉANCE
 ══════════════════════════════════ -->
 <div id="pg-seance" class="page">
+  <button class="btn btn-ghost" onclick="go('accueil')" style="margin-bottom:12px;padding:8px;font-size:12px">← Retour à l'accueil</button>
+
+  <div class="card" id="mon-prog-card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Mon programme</div>
+    <div class="sec" style="margin-top:0">Phase 1 — Force & Fondation</div>
+    <div class="wgrid" id="h-dots1"></div>
+    <div class="sec">Phase 2 — Puissance & Transfert</div>
+    <div class="wgrid" id="h-dots2" style="margin-bottom:10px"></div>
+    <div class="prog-row"><span>Progression</span><span id="h-pct">0%</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="h-bar" style="background:var(--grn);width:0%"></div></div>
+  </div>
 
   <!-- Sélecteur : 4 types de séance -->
   <div class="prog-switch">
@@ -904,6 +927,21 @@ window.onerror = function(msg, url, line) {
       <span class="label">Date de début du cycle</span>
       <input type="date" id="musc-debut" style="margin-bottom:8px" onchange="majCycleMuscu()">
       <div id="musc-status" style="font-size:11px;color:var(--txt3);margin-top:4px"></div>
+    </div>
+    <div class="card" data-sec="muscu">
+      <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Renforcement saisonnier — Mois actifs</div>
+      <div class="info-box">Active les mois où les joueuses passent au rythme 2 volley + 1 muscu/semaine. Chaque mois activé propose 4 séances (S1 à S4) calées sur les vraies semaines calendaires.</div>
+      <div id="mois-muscu-toggles" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
+    </div>
+    <div class="card" data-sec="muscu">
+      <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Créneaux fixes de la semaine</div>
+      <div class="info-box">Modèle récurrent (mêmes jours/horaires chaque semaine). Modifie un champ à tout moment pour un ajustement ponctuel — le changement s'applique dès la semaine en cours.</div>
+      <div id="creneaux-admin"></div>
+    </div>
+    <div class="card" data-sec="muscu">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Prévisions de la semaine</div>
+      <div id="previsions-liste"></div>
+      <button onclick="chargerPrevisionsSemaine()" class="btn btn-ghost" style="margin-top:8px;margin-bottom:0;padding:7px;font-size:11px">&#8635; Actualiser</button>
     </div>
     <div class="card" data-sec="muscu">
       <div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Suivi Musculation</div>
@@ -1477,7 +1515,7 @@ function toast(m){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // NAVIGATION
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-const PAGES=['accueil','profil','seance','videos','stats','coach'];
+const PAGES=['accueil','profil','seance','videos','stats','coach','musculation'];
 function go(id){
   PAGES.forEach(p=>{
     document.getElementById('pg-'+p).classList.toggle('on',p===id);
@@ -1485,11 +1523,13 @@ function go(id){
     const pc=document.getElementById('pc-'+p);if(pc)pc.classList.toggle('on',p===id);
   });
   document.querySelector('.scroll').scrollTop=0;
+  if(id==='seance'||id==='musculation'){ S.dernierSection=id; saveS(); }
   if(id==='accueil')renAccueil();
   if(id==='seance')renSeance();
   if(id==='videos')renVideos();
   if(id==='stats')renStats();
   if(id==='coach')renCoach();
+  if(id==='musculation'){ renMuscuJoueuse(); renEntrainementsSemaine(); }
 }
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -1537,6 +1577,14 @@ function restoreProfil(){
   if(S.poste)document.getElementById('p-pos').value=S.poste;
   if(S.poids)document.getElementById('p-pds').value=S.poids;
   if(S.nom&&S.eq)saveProfil();
+  appliquerThemeEquipe(S.eq);
+}
+function appliquerThemeEquipe(e){
+  document.body.classList.remove('theme-f','theme-m');
+  if(e) document.body.classList.add(e==='f' ? 'theme-f' : 'theme-m');
+  var bf = document.getElementById('eqg-f'), bm = document.getElementById('eqg-m');
+  if (bf) { bf.style.background = e==='f' ? '#fff' : 'rgba(255,255,255,.15)'; bf.style.color = e==='f' ? 'var(--pri-dark)' : 'var(--on-pri)'; bf.style.boxShadow = e==='f' ? '0 0 0 2px #fff, 0 0 0 4px var(--pri-dark)' : 'none'; }
+  if (bm) { bm.style.background = e==='m' ? '#fff' : 'rgba(255,255,255,.15)'; bm.style.color = e==='m' ? 'var(--pri-dark)' : 'var(--on-pri)'; bm.style.boxShadow = e==='m' ? '0 0 0 2px #fff, 0 0 0 4px var(--pri-dark)' : 'none'; }
 }
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -1760,6 +1808,7 @@ function setType(t){
 }
 
 function renSeance(){
+  renDotsProgramme();
   setProg(S.prog);
 }
 
@@ -1940,27 +1989,37 @@ function closeModal(){document.getElementById('modal-bg').classList.remove('vis'
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // ACCUEIL
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-function renAccueil(){
-  renCheckin();
-  renMaProgression();
-  chargerTestsActifs(renTestJoueuse);
-  chargerCycleMuscu(renMuscuJoueuse);
+function renDotsProgramme(){
   const tot=Object.keys(S.done).length;const pct=Math.round(tot/16*100);
-  document.getElementById('h-done').textContent=tot;
-  document.getElementById('h-pct').textContent=pct+'%';
-  document.getElementById('h-bar').style.width=pct+'%';
+  const hp=document.getElementById('h-pct'), hb=document.getElementById('h-bar');
+  if(hp)hp.textContent=pct+'%';
+  if(hb)hb.style.width=pct+'%';
   [[1,2,3,4],[5,6,7,8]].forEach((wks,pi)=>{
-    document.getElementById('h-dots'+(pi+1)).innerHTML=wks.map(w=>{
+    const el=document.getElementById('h-dots'+(pi+1));
+    if(!el)return;
+    el.innerHTML=wks.map(w=>{
       const ok=Object.keys(S.done).some(k=>k.startsWith('S'+w+'-')&&!k.endsWith('-extra'));
       return`<div class="wk p${pi+1}${S.week===w?' on':''} ${ok?'done':''}" onclick="S.week=${w};S.cweek=${w};saveS();go('seance')">
         S${w}<div class="wk-sub">${ok?'\u2713':THEMES[w-1].slice(0,4)}</div>
       </div>`;
     }).join('');
   });
-  const d3=document.getElementById('h-dots3');
-  if(d3)d3.innerHTML=[9,10,11,12].map(w=>
-    `<div class="wk wk-att" onclick="S.week=${w};saveS();go('seance')">S${w}<div class="wk-sub">\u23F3</div></div>`
-  ).join('');
+}
+function renAccueil(){
+  renCheckin();
+  renMaProgression();
+  chargerTestsActifs(renTestJoueuse);
+  const tot=Object.keys(S.done).length;
+  document.getElementById('h-done').textContent=tot;
+  renDotsProgramme();
+  majSurbrillanceActivite();
+}
+function majSurbrillanceActivite(){
+  var bp=document.getElementById('btn-prepa'), be=document.getElementById('btn-entr');
+  var ring='0 0 0 2px #fff, 0 0 0 4px var(--txt)';
+  var normal='0 4px 14px rgba(0,0,0,.12)';
+  if(bp) bp.style.boxShadow = (S.dernierSection==='seance') ? ring : normal;
+  if(be) be.style.boxShadow = (S.dernierSection==='musculation') ? ring : normal;
 }
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -2248,7 +2307,7 @@ choisirSeance(S.prog==='B'?'circuit':(S.prog==='C'?'extra':(S.stype||'salle')));
 document.addEventListener('visibilitychange',function(){
   if(!document.hidden && S.nom){
     if(typeof chargerTestsActifs==='function') chargerTestsActifs(renTestJoueuse);
-    if(typeof chargerCycleMuscu==='function') chargerCycleMuscu(renMuscuJoueuse);
+    if(typeof renMuscuJoueuse==='function') renMuscuJoueuse();
   }
 });
 // Restaurer le prog switcher
@@ -2493,6 +2552,9 @@ function renCoachDash() {
   setTimeout(function(){coachSection(_coachSec);},50);
   chargerJournalAcces();
   chargerCycleMuscu();
+  chargerMoisMuscuActifs(renMoisMuscuAdmin);
+  chargerCreneauxSemaine(renCreneauxAdmin);
+  chargerPrevisionsSemaine();
   chargerSuiviMuscu();
   chargerTestsActifs();
   chargerResultatsTests();
@@ -2561,6 +2623,15 @@ function togglePlayer(cb) {
   saveS(); renCoachDash();
 }
 
+function setEquipeGlobale(e) {
+  S.eq = e;
+  saveS();
+  appliquerThemeEquipe(e);
+  var pe = document.getElementById('p-eq');
+  if (pe) { pe.value = e; remplirNomsProfil(); }
+  saveProfil();
+  renAccueil();
+}
 function setEq(e) {
   _newEq = e;
   var bf = document.getElementById('eq-f');
@@ -3459,6 +3530,302 @@ function chargerTestsActifs(cb){
     if(typeof cb==='function') cb();
   });
 }
+// ═══ Renforcement saisonnier — calendrier mensuel (Sept → Avril) ═══
+var MOIS_MUSCU = [
+  {key:'septembre', label:'Septembre', m:8,  y:2026},
+  {key:'octobre',   label:'Octobre',   m:9,  y:2026},
+  {key:'novembre',  label:'Novembre',  m:10, y:2026},
+  {key:'decembre',  label:'Décembre',  m:11, y:2026},
+  {key:'janvier',   label:'Janvier',   m:0,  y:2027},
+  {key:'fevrier',   label:'Février',   m:1,  y:2027},
+  {key:'mars',      label:'Mars',      m:2,  y:2027},
+  {key:'avril',     label:'Avril',     m:3,  y:2027}
+];
+var MOIS_ABBR = ['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
+var _moisMuscuActifs = [];
+var _moisMuscuSelect = null;
+
+function semainesDuMois(m, y) {
+  var joursDansMois = new Date(y, m+1, 0).getDate();
+  var bornes = [1, 8, 15, 22];
+  var out = [];
+  for (var i = 0; i < 4; i++) {
+    var debut = bornes[i];
+    var fin = (i < 3) ? bornes[i+1]-1 : joursDansMois;
+    out.push({n:i+1, debut:debut, fin:fin});
+  }
+  return out;
+}
+function labelSemaine(m, y, sem) {
+  return sem.debut+'–'+sem.fin+' '+MOIS_ABBR[m];
+}
+
+function chargerMoisMuscuActifs(cb) {
+  sbGet('vbc_config', 'cle=eq.mois_muscu_actifs', function(rows) {
+    _moisMuscuActifs = [];
+    if (rows && rows.length && rows[0].valeur) {
+      try { _moisMuscuActifs = JSON.parse(rows[0].valeur) || []; } catch(e) {}
+    }
+    if (typeof cb === 'function') cb();
+  });
+}
+function toggleMoisMuscuActif(key) {
+  var idx = _moisMuscuActifs.indexOf(key);
+  if (idx >= 0) _moisMuscuActifs.splice(idx, 1); else _moisMuscuActifs.push(key);
+  renMoisMuscuAdmin();
+  upsertConfig('mois_muscu_actifs', JSON.stringify(_moisMuscuActifs), function(ok) {
+    if (!ok) toast('Erreur, réessaie');
+  });
+}
+function renMoisMuscuAdmin() {
+  var el = document.getElementById('mois-muscu-toggles');
+  if (!el) return;
+  var h = '';
+  MOIS_MUSCU.forEach(function(mo) {
+    var actif = _moisMuscuActifs.indexOf(mo.key) >= 0;
+    h += '<button onclick="toggleMoisMuscuActif(\''+mo.key+'\')" style="flex:1;min-width:80px;padding:9px 6px;border-radius:9px;border:1.5px solid '+(actif?'#d4691e':'var(--bdr)')+';background:'+(actif?'#d4691e':'var(--card)')+';color:'+(actif?'#fff':'var(--txt)')+';font-size:12px;font-weight:700;cursor:pointer">'+mo.label+(actif?' ✓':'')+'</button>';
+  });
+  el.innerHTML = h;
+}
+
+function renMuscuJoueuse() {
+  var card = document.getElementById('muscu-card'), body = document.getElementById('muscu-body');
+  if (!card || !body) return;
+  card.style.display = 'block';
+  if (!S.nom) { body.innerHTML = '<div style="font-size:12px;color:var(--txt2);text-align:center;padding:16px 8px">Renseigne ton profil pour accéder à ton suivi musculation.</div>'; return; }
+  chargerMoisMuscuActifs(function() {
+    sbGet('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&type_seance=eq.muscu&order=created_at.desc&limit=200', function(rows) {
+      var fait = {};
+      (rows || []).forEach(function(r) { if (r.mois && r.semaine) fait[r.mois+'-'+r.semaine] = {sousType:r.sous_type||'salle'}; });
+      renMuscuMoisListe(body, fait);
+    });
+  });
+}
+function renMuscuMoisListe(body, fait) {
+  if (!_moisMuscuActifs.length) {
+    body.innerHTML = '<div style="text-align:center;padding:24px 10px"><div style="font-size:32px;margin-bottom:10px">💪</div><div style="font-size:13px;font-weight:700;margin-bottom:4px">Pas encore de mois activé</div><div style="font-size:12px;color:var(--txt2);line-height:1.5">Ton coach n\'a pas encore ouvert le renforcement saisonnier.<br>Reviens bientôt !</div></div>';
+    return;
+  }
+  var h = '<div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:10px">2 entraînements volley + 1 séance muscu par semaine. Choisis un mois pour voir tes 4 séances.</div>';
+  h += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
+  MOIS_MUSCU.forEach(function(mo) {
+    var actif = _moisMuscuActifs.indexOf(mo.key) >= 0;
+    var sel = _moisMuscuSelect === mo.key;
+    if (!actif) {
+      h += '<button disabled style="flex:1;min-width:80px;padding:9px 6px;border-radius:9px;border:1.5px solid var(--bdr);background:var(--bg);color:var(--txt3);font-size:12px;font-weight:700">🔒 '+mo.label+'</button>';
+    } else {
+      h += '<button onclick="selectMoisMuscu(\''+mo.key+'\')" style="flex:1;min-width:80px;padding:9px 6px;border-radius:9px;border:1.5px solid '+(sel?'#d4691e':'var(--bdr)')+';background:'+(sel?'#d4691e':'var(--card)')+';color:'+(sel?'#fff':'var(--txt)')+';font-size:12px;font-weight:700;cursor:pointer">'+mo.label+'</button>';
+    }
+  });
+  h += '</div>';
+  h += '<div id="muscu-semaines"></div>';
+  body.innerHTML = h;
+  if (_moisMuscuSelect && _moisMuscuActifs.indexOf(_moisMuscuSelect) >= 0) {
+    renMuscuSemaines(fait);
+  } else {
+    document.getElementById('muscu-semaines').innerHTML = '';
+  }
+  body._faitCache = fait; // pour selectMoisMuscu
+}
+function selectMoisMuscu(key) {
+  _moisMuscuSelect = key;
+  var body = document.getElementById('muscu-body');
+  renMuscuMoisListe(body, body._faitCache || {});
+}
+function renMuscuSemaines(fait) {
+  var el = document.getElementById('muscu-semaines');
+  if (!el) return;
+  var mo = MOIS_MUSCU.filter(function(x){ return x.key === _moisMuscuSelect; })[0];
+  if (!mo) return;
+  var sems = semainesDuMois(mo.m, mo.y);
+  var h = '<div style="font-weight:800;font-size:13px;margin-bottom:8px">'+mo.label+'</div>';
+  sems.forEach(function(s) {
+    var k = mo.key+'-'+s.n;
+    var done = fait[k];
+    h += '<div style="padding:9px 10px;border-radius:9px;border:1.5px solid '+(done?'var(--grn)':'var(--bdr)')+';background:'+(done?'var(--grn-bg)':'var(--card)')+';margin-bottom:6px">'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      + '<div style="width:14px;height:14px;border-radius:50%;flex-shrink:0;background:'+(done?'var(--grn)':'#c0392b')+'"></div>'
+      + '<div style="flex:1"><div style="font-size:12.5px;font-weight:700">Semaine '+s.n+'</div><div style="font-size:10.5px;color:var(--txt2)">'+labelSemaine(mo.m,mo.y,s)+'</div></div>'
+      + (done ? '<span style="font-size:11px;font-weight:800;color:var(--grn)">✓ '+(done.sousType==='circuit'?'Circuit Force':'Salle')+'</span>' : '')
+      + '</div>';
+    if (!done) {
+      h += '<div style="display:flex;gap:6px;margin-top:8px">'
+        + '<button onclick="validerMuscuSemaine(\''+mo.key+'\','+s.n+',\'salle\')" class="btn" style="background:#d4691e;color:#fff;margin-bottom:0;padding:7px 6px;font-size:11px">🏋️ Salle</button>'
+        + '<button onclick="validerMuscuSemaine(\''+mo.key+'\','+s.n+',\'circuit\')" class="btn" style="background:var(--pur);color:#fff;margin-bottom:0;padding:7px 6px;font-size:11px">🔄 Circuit Force</button>'
+        + '</div>';
+    }
+    h += '</div>';
+  });
+  el.innerHTML = h;
+}
+function validerMuscuSemaine(moisKey, semNum, sousType) {
+  if (!S.nom || !S.eq) { toast('Choisis ton nom dans Profil'); return; }
+  var mo = MOIS_MUSCU.filter(function(x){ return x.key === moisKey; })[0];
+  var payload = {prenom:S.nom, equipe:S.eq, semaine:semNum, type_seance:'muscu', mois:moisKey, sous_type:sousType, feeling:0, note:mo?mo.label:'', date_seance:new Date().toLocaleDateString('fr-FR')};
+  sbPost('vbc_seances', payload, function(ok) {
+    if (ok) toast('Séance muscu validée ✓'); else queueLocale('vbc_seances', payload);
+    renMuscuJoueuse();
+  });
+}
+
+// ═══ Créneaux fixes de la semaine (entraînements + match) ═══
+var JOURS_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+var JOURS_ABBR = ['dim','lun','mar','mer','jeu','ven','sam'];
+var DEFAULT_CRENEAUX = {
+  c1:{jour:2, heureDebut:'20:15', heureFin:'22:15', label:'Entraînement'},
+  c2:{jour:5, heureDebut:'20:15', heureFin:'22:15', label:'Entraînement'},
+  c3:{jour:null, heureDebut:'', heureFin:'', label:'Séance libre'},
+  match:{jour:0, heureDebut:'15:00', heureFin:'', label:'Match', adversaire:''}
+};
+var _creneauxSemaine = JSON.parse(JSON.stringify(DEFAULT_CRENEAUX));
+function chargerCreneauxSemaine(cb) {
+  sbGet('vbc_config', 'cle=eq.creneaux_semaine', function(rows) {
+    _creneauxSemaine = JSON.parse(JSON.stringify(DEFAULT_CRENEAUX));
+    if (rows && rows.length && rows[0].valeur) {
+      try {
+        var v = JSON.parse(rows[0].valeur);
+        Object.keys(v).forEach(function(k){ _creneauxSemaine[k] = Object.assign({}, _creneauxSemaine[k]||{}, v[k]); });
+      } catch(e) {}
+    }
+    if (typeof cb === 'function') cb();
+  });
+}
+function sauverCreneauxSemaine() {
+  upsertConfig('creneaux_semaine', JSON.stringify(_creneauxSemaine), function(ok) {
+    if (!ok) toast('Erreur, réessaie');
+  });
+}
+function majCreneau(key, champ, val) {
+  if (!_creneauxSemaine[key]) _creneauxSemaine[key] = {};
+  _creneauxSemaine[key][champ] = (champ === 'jour') ? (val === '' ? null : parseInt(val, 10)) : val;
+  sauverCreneauxSemaine();
+}
+function renCreneauxAdmin() {
+  var el = document.getElementById('creneaux-admin');
+  if (!el) return;
+  function selectJour(key, cur) {
+    var h = '<select onchange="majCreneau(\''+key+'\',\'jour\',this.value)" style="margin-bottom:6px">';
+    h += '<option value="">-- Jour --</option>';
+    JOURS_FR.forEach(function(j, i) { h += '<option value="'+i+'"'+(String(cur)===String(i)?' selected':'')+'>'+j+'</option>'; });
+    h += '</select>';
+    return h;
+  }
+  var h = '';
+  [['c1','Créneau 1'], ['c2','Créneau 2'], ['c3','Créneau 3 (libre)']].forEach(function(pair) {
+    var key = pair[0], titre = pair[1], c = _creneauxSemaine[key] || {};
+    h += '<div style="border:1.5px solid var(--bdr);border-radius:9px;padding:10px;margin-bottom:8px">'
+      + '<div style="font-weight:800;font-size:12px;margin-bottom:6px">'+titre+'</div>'
+      + selectJour(key, c.jour)
+      + '<div style="display:flex;gap:6px;margin-top:6px">'
+      + '<input type="time" value="'+(c.heureDebut||'')+'" onchange="majCreneau(\''+key+'\',\'heureDebut\',this.value)" style="flex:1;margin-bottom:0">'
+      + '<input type="time" value="'+(c.heureFin||'')+'" onchange="majCreneau(\''+key+'\',\'heureFin\',this.value)" style="flex:1;margin-bottom:0">'
+      + '</div>'
+      + '<input type="text" placeholder="Libellé" value="'+(c.label||'')+'" onchange="majCreneau(\''+key+'\',\'label\',this.value)" style="margin-top:6px;margin-bottom:0">'
+      + '</div>';
+  });
+  var m = _creneauxSemaine.match || {};
+  h += '<div style="border:1.5px solid #d4691e;border-radius:9px;padding:10px;margin-bottom:8px">'
+    + '<div style="font-weight:800;font-size:12px;margin-bottom:6px;color:#d4691e">🏆 Match</div>'
+    + selectJour('match', m.jour)
+    + '<input type="time" value="'+(m.heureDebut||'')+'" onchange="majCreneau(\'match\',\'heureDebut\',this.value)" style="margin-top:6px;margin-bottom:0">'
+    + '<input type="text" placeholder="Ex : Bailleul / Marcq" value="'+(m.adversaire||'')+'" onchange="majCreneau(\'match\',\'adversaire\',this.value)" style="margin-top:6px;margin-bottom:0">'
+    + '</div>';
+  el.innerHTML = h;
+}
+function dateSemainePourJour(jour) {
+  var now = new Date();
+  var lundi = new Date(now); lundi.setDate(now.getDate() - ((now.getDay()+6)%7)); lundi.setHours(0,0,0,0);
+  var offset = (jour === 0) ? 6 : (jour - 1);
+  var d = new Date(lundi); d.setDate(lundi.getDate() + offset);
+  return d;
+}
+function isoDate(d) { return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function fmtDateFR(d) { return JOURS_ABBR[d.getDay()]+' '+('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2); }
+function creneauxDeLaSemaine() {
+  var items = [];
+  ['c1','c2','c3'].forEach(function(k) {
+    var c = _creneauxSemaine[k];
+    if (c && c.jour != null && c.heureDebut) items.push({key:k, type:'entrainement', label:c.label||'Entraînement', jour:c.jour, heureDebut:c.heureDebut, heureFin:c.heureFin});
+  });
+  var m = _creneauxSemaine.match;
+  if (m && m.jour != null && m.heureDebut) items.push({key:'match', type:'match', label:(m.adversaire ? (m.label||'Match')+' — '+m.adversaire : (m.label||'Match')), jour:m.jour, heureDebut:m.heureDebut, heureFin:m.heureFin});
+  return items;
+}
+function renEntrainementsSemaine() {
+  var el = document.getElementById('entr-semaine');
+  if (!el) return;
+  if (!S.nom) { el.innerHTML = '<div style="font-size:12px;color:var(--txt2);text-align:center;padding:14px 8px">Renseigne ton profil pour répondre présence.</div>'; return; }
+  el.innerHTML = '<div style="font-size:12px;color:var(--txt2)">Chargement...</div>';
+  chargerCreneauxSemaine(function() {
+    var items = creneauxDeLaSemaine();
+    if (!items.length) { el.innerHTML = '<div style="font-size:12px;color:var(--txt2);padding:8px 0">Aucun créneau configuré par ton coach pour l\'instant.</div>'; return; }
+    var dateISOs = items.map(function(it) { return isoDate(dateSemainePourJour(it.jour)); });
+    sbGet('vbc_presences', 'prenom=eq.'+encodeURIComponent(S.nom)+'&date_entrainement=in.('+dateISOs.join(',')+')', function(rows) {
+      var reponses = {};
+      (rows || []).forEach(function(r) { reponses[r.date_entrainement+'|'+(r.creneau_label||'')] = r.present; });
+      var h = '';
+      items.forEach(function(it, idx) {
+        var d = dateSemainePourJour(it.jour);
+        var iso = dateISOs[idx];
+        var passe = new Date(iso+'T'+(it.heureDebut||'00:00')) < new Date();
+        var rep = reponses[iso+'|'+it.label];
+        var safeLabel = it.label.replace(/'/g, "\\'");
+        h += '<div style="border:1.5px solid '+(it.type==='match'?'#d4691e':'var(--bdr)')+';border-radius:10px;padding:10px;margin-bottom:8px">'
+          + '<div style="font-weight:800;font-size:13px">'+(it.type==='match'?'🏆 ':'🏐 ')+it.label+'</div>'
+          + '<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">'+fmtDateFR(d)+' · '+it.heureDebut+(it.heureFin?'–'+it.heureFin:'')+'</div>';
+        if (passe && rep == null) {
+          h += '<div style="font-size:11px;color:var(--txt3)">Créneau passé, pas de réponse enregistrée.</div>';
+        } else {
+          h += '<div style="display:flex;gap:6px">'
+            + '<button '+(passe?'disabled':'')+' onclick="declarerPresence(\''+iso+'\',\''+safeLabel+'\',\''+it.type+'\',\''+it.heureDebut+'\',true)" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--grn);background:'+(rep===true?'var(--grn)':'var(--card)')+';color:'+(rep===true?'#fff':'var(--grn)')+';font-weight:700;font-size:12px;cursor:pointer">✓ Présent</button>'
+            + '<button '+(passe?'disabled':'')+' onclick="declarerPresence(\''+iso+'\',\''+safeLabel+'\',\''+it.type+'\',\''+it.heureDebut+'\',false)" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #c0392b;background:'+(rep===false?'#c0392b':'var(--card)')+';color:'+(rep===false?'#fff':'#c0392b')+';font-weight:700;font-size:12px;cursor:pointer">✗ Absent</button>'
+            + '</div>';
+          if (passe) h += '<div style="font-size:10px;color:var(--txt3);margin-top:4px">Créneau commencé, réponse verrouillée.</div>';
+        }
+        h += '</div>';
+      });
+      el.innerHTML = h;
+    });
+  });
+}
+function declarerPresence(dateISO, label, type, heure, present) {
+  if (!S.nom || !S.eq) { toast('Choisis ton nom dans Profil'); return; }
+  var filtre = 'prenom=eq.'+encodeURIComponent(S.nom)+'&date_entrainement=eq.'+dateISO+'&creneau_label=eq.'+encodeURIComponent(label);
+  sbDelete('vbc_presences', filtre, function() {
+    var payload = {prenom:S.nom, equipe:S.eq, date_entrainement:dateISO, present:present, creneau_label:label, type_evenement:type, heure:heure};
+    sbPost('vbc_presences', payload, function(ok) {
+      toast(ok ? 'Réponse enregistrée ✓' : 'Erreur, réessaie');
+      renEntrainementsSemaine();
+    });
+  });
+}
+function chargerPrevisionsSemaine() {
+  var el = document.getElementById('previsions-liste');
+  if (!el) return;
+  el.innerHTML = '<div style="font-size:12px;color:var(--txt3)">Chargement…</div>';
+  chargerCreneauxSemaine(function() {
+    var items = creneauxDeLaSemaine();
+    if (!items.length) { el.innerHTML = '<div style="font-size:12px;color:var(--txt2)">Aucun créneau configuré.</div>'; return; }
+    var dateISOs = items.map(function(it) { return isoDate(dateSemainePourJour(it.jour)); });
+    sbGet('vbc_presences', 'date_entrainement=in.('+dateISOs.join(',')+')&order=prenom.asc', function(rows) {
+      rows = rows || [];
+      var h = '';
+      items.forEach(function(it, idx) {
+        var iso = dateISOs[idx];
+        var rs = rows.filter(function(r) { return r.date_entrainement === iso && r.creneau_label === it.label; });
+        var oui = rs.filter(function(r) { return r.present; }).map(function(r) { return r.prenom; });
+        var non = rs.filter(function(r) { return !r.present; }).map(function(r) { return r.prenom; });
+        h += '<div style="border:1.5px solid var(--bdr);border-radius:9px;padding:10px;margin-bottom:8px">'
+          + '<div style="font-weight:800;font-size:12.5px">'+(it.type==='match'?'🏆 ':'🏐 ')+it.label+' · '+fmtDateFR(dateSemainePourJour(it.jour))+'</div>'
+          + '<div style="font-size:11px;color:var(--grn);margin-top:4px">✓ '+oui.length+' : '+(oui.join(', ')||'—')+'</div>'
+          + '<div style="font-size:11px;color:#c0392b;margin-top:2px">✗ '+non.length+' : '+(non.join(', ')||'—')+'</div>'
+          + '</div>';
+      });
+      el.innerHTML = h;
+    });
+  });
+}
+
 function upsertConfig(cle, valeur, cb){
   var H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
   fetch(SB_URL+'/rest/v1/vbc_config?cle=eq.'+encodeURIComponent(cle), {method:'DELETE', headers:H})
@@ -3624,38 +3991,6 @@ function envoyerTest(){
   toast('Test envoyé à ton coach ✓');
   var body=document.getElementById('test-body');
   body.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:32px">✅</div><div style="font-weight:800;font-size:14px;margin-top:6px">Test envoyé, merci !</div><div style="font-size:12px;color:var(--txt2)">Ton coach a reçu tes résultats.</div></div>';
-}
-function renMuscuJoueuse(){
-  var card=document.getElementById('muscu-card'), body=document.getElementById('muscu-body');
-  if(!card||!body)return;
-  if(!S.nom||!_cycleMuscu.actif){card.style.display='none';return;}
-  // Compter les muscu déjà faites cette semaine (clé par semaine ISO simple : numéro de semaine calendaire)
-  var maintenant=new Date();
-  var lundi=new Date(maintenant); lundi.setDate(maintenant.getDate()-((maintenant.getDay()+6)%7)); lundi.setHours(0,0,0,0);
-  var faitCetteSem=false;
-  Object.keys(S.muscuDone||{}).forEach(function(k){
-    var d=new Date(S.muscuDone[k]); if(d>=lundi)faitCetteSem=true;
-  });
-  var h='<div style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:10px">Cycle en cours : <strong style="color:#d4691e">'+(_cycleMuscu.nom||'Musculation')+'</strong>. Valide ta séance muscu de la semaine quand tu l\'as faite.</div>';
-  if(faitCetteSem){
-    h+='<div style="background:var(--grn-bg);border-radius:8px;padding:12px;text-align:center"><div style="font-size:24px">\u2705</div><div style="font-size:13px;font-weight:800;color:var(--grn);margin-top:4px">Muscu validée cette semaine !</div></div>';
-  } else {
-    h+='<button class="btn" onclick="validerMuscu()" style="background:#d4691e;color:#fff;margin-bottom:0">\uD83C\uDFCB J\'ai fait ma muscu cette semaine \u2713</button>';
-  }
-  card.style.display='block';
-  body.innerHTML=h;
-}
-function validerMuscu(){
-  if(!S.nom||!S.eq){toast('Choisis ton nom dans Profil');return;}
-  var w=S.week||1;
-  var dte=new Date().toLocaleDateString('fr-FR');
-  var data={prenom:S.nom,equipe:S.eq,semaine:w,type_seance:'muscu',feeling:0,note:_cycleMuscu.nom||'Muscu',date_seance:dte};
-  sbPost('vbc_seances',data,function(ok){ if(!ok)queueLocale('vbc_seances',data); });
-  S.muscuDone=S.muscuDone||{};
-  S.muscuDone['M'+Date.now()]=new Date().toISOString();
-  saveS();
-  toast('Muscu enregistrée \u2713');
-  renMuscuJoueuse();
 }
 function renMaProgression() {
   var card = document.getElementById('mp-card');
