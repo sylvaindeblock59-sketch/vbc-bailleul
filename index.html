@@ -314,7 +314,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v83</div>
+    <div class="hdr-pill">Été 2026 · v84</div>
   </div>
   <div style="display:flex;gap:6px;padding:0 16px 10px">
     <button id="eqg-f" onclick="setEquipeGlobale('f')" style="flex:1;padding:8px;border-radius:9px;border:none;background:rgba(255,255,255,.15);color:var(--on-pri);font-size:12px;font-weight:800;cursor:pointer">♀ N2F</button>
@@ -1260,7 +1260,24 @@ function viderFileAttente() {
   var q;
   try { q = JSON.parse(localStorage.getItem('sb-queue') || '[]'); } catch(e) { return; }
   if (!q.length) return;
-  var enCours = q.slice();
+  var MAX_AGE = 72 * 3600 * 1000; // 72h : au-delà, une entrée en attente n'est plus fiable
+  var maintenant = Date.now();
+  var vus = {};
+  var aGarder = [];
+  q.forEach(function(item) {
+    if (!item.ts || (maintenant - item.ts) > MAX_AGE) return; // trop ancien, on l'abandonne
+    var cle = item.table === 'vbc_seances'
+      ? [item.table, item.data.prenom, item.data.semaine, item.data.type_seance, item.data.mois, item.data.date_seance].join('|')
+      : item.table + '|' + JSON.stringify(item.data);
+    if (vus[cle]) return; // doublon exact déjà présent dans la file, on ne l'envoie qu'une fois
+    vus[cle] = true;
+    aGarder.push(item);
+  });
+  if (aGarder.length !== q.length) {
+    try { localStorage.setItem('sb-queue', JSON.stringify(aGarder)); } catch(e) {}
+  }
+  if (!aGarder.length) return;
+  var enCours = aGarder.slice();
   var traites = 0, aRetirer = [];
   enCours.forEach(function(item, idx) {
     sbPost(item.table, item.data, function(ok) {
