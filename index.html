@@ -311,7 +311,7 @@ window.onerror = function(msg, url, line) {
       <div class="hdr-title">VBC Bailleul</div>
       <div class="hdr-sub">Préparation physique · Sylvain Deblock</div>
     </div>
-    <div class="hdr-pill">Été 2026 · v69</div>
+    <div class="hdr-pill">Été 2026 · v70</div>
   </div>
 </div>
 
@@ -1181,6 +1181,33 @@ function sbInsert(table, data) {
     serveurEtat(ok);
     if (!ok) queueLocale(table, data);
   });
+}
+
+function sbPatch(table, filtre, data, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('PATCH', SB_URL+'/rest/v1/'+table+'?'+filtre, true);
+  xhr.setRequestHeader('apikey', SB_KEY);
+  xhr.setRequestHeader('Authorization', 'Bearer '+SB_KEY);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('Prefer', 'return=minimal');
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4) { if (cb) cb(xhr.status >= 200 && xhr.status < 300); }
+  };
+  xhr.onerror = function() { if (cb) cb(false); };
+  try { xhr.send(JSON.stringify(data)); } catch(e) { if (cb) cb(false); }
+}
+
+function sbDelete(table, filtre, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('DELETE', SB_URL+'/rest/v1/'+table+'?'+filtre, true);
+  xhr.setRequestHeader('apikey', SB_KEY);
+  xhr.setRequestHeader('Authorization', 'Bearer '+SB_KEY);
+  xhr.setRequestHeader('Prefer', 'return=minimal');
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4) { if (cb) cb(xhr.status >= 200 && xhr.status < 300); }
+  };
+  xhr.onerror = function() { if (cb) cb(false); };
+  try { xhr.send(); } catch(e) { if (cb) cb(false); }
 }
 
 function queueLocale(table, data) {
@@ -2060,13 +2087,17 @@ valider = function(prog) {
     var _sdChk = document.getElementById('s-date');
     if (_sdChk && _sdChk.value) { var _pc=_sdChk.value.split('-'); jChk=_pc[2]+'/'+_pc[1]+'/'+_pc[0]; }
     else jChk = new Date().toLocaleDateString('fr-FR');
-    // Vérifie côté serveur : même type + même jour (date choisie) déjà enregistré ?
-    sbGet('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&semaine=eq.'+wChk+'&type_seance=eq.'+encodeURIComponent(tChk), function(rows) {
+    // Vérifie côté serveur : même type + même semaine déjà validée (statut ok) ?
+    sbGet('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&semaine=eq.'+wChk+'&type_seance=eq.'+encodeURIComponent(tChk)+'&statut=eq.ok', function(rows) {
       var dejaFaite = (rows||[]).length > 0;
+      window._validLock = false;
       if (dejaFaite) {
         var lbls = {salle:'Salle', ext:'Ext\u00e9rieur', circuit:'Circuit'};
-        toast('\u2713 '+(lbls[tChk]||tChk)+' d\u00e9j\u00e0 valid\u00e9e en S'+wChk);
-        window._validLock = false;
+        if (confirm('Tu as d\u00e9j\u00e0 valid\u00e9 une s\u00e9ance '+(lbls[tChk]||tChk)+' en S'+wChk+'.\n\nSi tu en as r\u00e9ellement fait une 2e (ex. pas d\u2019acc\u00e8s salle, s\u00e9ance de rattrapage), elle sera envoy\u00e9e au coach pour validation avant de compter dans les stats.\n\nConfirmer cette 2e s\u00e9ance exceptionnelle ?')) {
+          window._validLock = true;
+          setTimeout(function(){ window._validLock = false; }, 5000);
+          _finaliserValidation(prog, true);
+        }
       } else {
         _finaliserValidation(prog);
       }
@@ -2075,7 +2106,7 @@ valider = function(prog) {
   }
   _finaliserValidation(prog);
 };
-function _finaliserValidation(prog) {
+function _finaliserValidation(prog, exceptionnel) {
   _origValider(prog);
   if (S.nom && S.eq) {
     var w = prog==='A' ? S.week : S.cweek;
@@ -2084,13 +2115,16 @@ function _finaliserValidation(prog) {
     if (_sd && _sd.value) { var _p=_sd.value.split('-'); today=_p[2]+'/'+_p[1]+'/'+_p[0]; }
     else today = new Date().toLocaleDateString('fr-FR');
     var feel = prog==='A' ? S.feelA : S.feelB;
-    sbPost('vbc_seances', {
+    var statutSeance = exceptionnel ? 'attente' : 'ok';
+    var payload = {
       prenom:S.nom, equipe:S.eq, semaine:w,
       type_seance:prog==='A'?S.stype:'circuit',
-      feeling:feel, note:'', date_seance:today
-    }, function(ok) {
-      if (ok) toast('Envoyé au coach \u2713');
-      else queueLocale('vbc_seances', {prenom:S.nom,equipe:S.eq,semaine:w,type_seance:prog==='A'?S.stype:'circuit',feeling:feel,note:'',date_seance:today});
+      feeling:feel, note:exceptionnel?'2e s\u00e9ance exceptionnelle':'', date_seance:today, statut:statutSeance
+    };
+    sbPost('vbc_seances', payload, function(ok) {
+      if (ok) toast(exceptionnel ? '\u23F3 Envoy\u00e9 au coach \u2014 en attente de validation' : 'Envoyé au coach \u2713');
+      else queueLocale('vbc_seances', payload);
+      if (exceptionnel && typeof verifierAlertesAttente === 'function') verifierAlertesAttente();
     });
     if (prog === 'A' && S.charges) {
       var pref = 'S' + w + '-';
@@ -2155,7 +2189,7 @@ function sauvetageDonneesLocales() {
 }
 function loadMesSeances() {
   if (!S.nom) return;
-  sbGetCache('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&order=semaine.asc', function(rows, ok) {
+  sbGetCache('vbc_seances', 'prenom=eq.'+encodeURIComponent(S.nom)+'&statut=eq.ok&order=semaine.asc', function(rows, ok) {
     if (!rows || !rows.length) return;
     var ajout = 0;
     rows.forEach(function(r) {
@@ -2240,6 +2274,7 @@ function chargerCodeCoach(){
 }
 chargerCodeCoach();
 chargerSaison();
+setTimeout(function(){ if (typeof verifierAlertesAttente === 'function') verifierAlertesAttente(); }, 2000);
 function gererSaisons(){
   var choix = prompt('SAISON ACTIVE : '+SAISON+'\n\nQue veux-tu faire ?\n\n1 = Voir/changer la saison affichée (consulter historique)\n2 = DÉMARRER une nouvelle saison (archive l\'actuelle, repart à neuf)\n\nTape 1 ou 2 :');
   if(choix===null) return;
@@ -2590,16 +2625,56 @@ function basculerVueSuivi() {
   _vueSuivi = (_vueSuivi === 'barres') ? 'grille' : 'barres';
   chargerSuivi();
 }
+function chargerAlertesAttenteHtml(rows) {
+  if (!rows || !rows.length) return '';
+  var lbls = {salle:'Salle', ext:'Ext\u00e9rieur', circuit:'Circuit'};
+  var h = '<div style="background:#fdf3ea;border:1.5px solid #d4691e;border-radius:10px;padding:10px;margin-bottom:14px">';
+  h += '<div style="font-weight:800;font-size:12px;color:#d4691e;margin-bottom:8px">\u26A0 '+rows.length+' s\u00e9ance(s) exceptionnelle(s) \u00e0 valider</div>';
+  rows.forEach(function(r){
+    h += '<div style="background:#fff;border-radius:8px;padding:8px;margin-bottom:6px">'
+      + '<div style="font-size:12px;font-weight:700">'+r.prenom+' \u2014 '+(lbls[r.type_seance]||r.type_seance)+' \u00b7 S'+r.semaine+' \u00b7 '+(r.date_seance||'')+'</div>'
+      + '<div style="display:flex;gap:6px;margin-top:6px">'
+      + '<button onclick="validerSeanceAttente('+r.id+')" class="btn" style="flex:1;margin-bottom:0;padding:6px;font-size:11px;background:var(--grn);color:#fff">\u2713 Valider</button>'
+      + '<button onclick="refuserSeanceAttente('+r.id+')" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:6px;font-size:11px;color:#c0392b">\u2716 Refuser</button>'
+      + '</div></div>';
+  });
+  h += '</div>';
+  return h;
+}
+function validerSeanceAttente(id) {
+  sbPatch('vbc_seances', 'id=eq.'+id, {statut:'ok'}, function(ok) {
+    toast(ok ? 'S\u00e9ance valid\u00e9e \u2713' : 'Erreur, r\u00e9essaie');
+    chargerSuivi();
+    if (typeof verifierAlertesAttente === 'function') verifierAlertesAttente();
+  });
+}
+function refuserSeanceAttente(id) {
+  if (!confirm('Refuser et supprimer cette s\u00e9ance exceptionnelle ?')) return;
+  sbDelete('vbc_seances', 'id=eq.'+id, function(ok) {
+    toast(ok ? 'S\u00e9ance refus\u00e9e' : 'Erreur, r\u00e9essaie');
+    chargerSuivi();
+    if (typeof verifierAlertesAttente === 'function') verifierAlertesAttente();
+  });
+}
+function verifierAlertesAttente() {
+  sbGet('vbc_seances', 'statut=eq.attente&select=id&limit=1', function(rows) {
+    var b = document.getElementById('coach-badge');
+    if (!b) return;
+    b.style.display = (rows && rows.length) ? 'block' : 'none';
+  });
+}
 function chargerSuivi() {
   var el = document.getElementById('c-suivi');
   if (!el) return;
   el.innerHTML = '<div style="font-size:12px;color:var(--txt2)">Chargement...</div>';
-  sbGetCache('vbc_seances', 'order=semaine.asc&limit=500', function(seances, ok, cacheTs) {
+  sbGet('vbc_seances', 'statut=eq.attente&order=created_at.desc&limit=100', function(attenteRows) {
+  var alertesHtml = chargerAlertesAttenteHtml(attenteRows);
+  sbGetCache('vbc_seances', 'statut=eq.ok&order=semaine.asc&limit=500', function(seances, ok, cacheTs) {
     var note = ok ? '' : noteCache(seances.length ? cacheTs : null);
     var done = document.getElementById('c-done');
     if (done) done.textContent = seances.length;
     if (!seances.length) {
-      el.innerHTML = note + '<div style="font-size:12px;color:var(--txt2);padding:8px 0">Aucune séance enregistrée.</div>';
+      el.innerHTML = alertesHtml + note + '<div style="font-size:12px;color:var(--txt2);padding:8px 0">Aucune séance enregistrée.</div>';
       return;
     }
     var byP = {};
@@ -2640,7 +2715,7 @@ function chargerSuivi() {
       });
       hb += '<div style="font-size:10px;color:var(--txt3);margin-top:8px">Bar\u00e8me couleur : <span style="color:var(--grn);font-weight:700">\u25CF</span> 10+ s\u00e9ances \u00b7 <span style="color:#d4691e;font-weight:700">\u25CF</span> 5-9 \u00b7 <span style="color:var(--acc);font-weight:700">\u25CF</span> moins de 5. S = derni\u00e8re semaine atteinte.</div>';
       hb += '<div style="display:flex;gap:6px;margin-top:10px"><button onclick="basculerVueSuivi()" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:7px;font-size:11px">\u25A6 Vue d\u00e9taill\u00e9e</button><button onclick="chargerSuivi()" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:7px;font-size:11px">\u21BB Actualiser</button></div>';
-      el.innerHTML = note + hb;
+      el.innerHTML = alertesHtml + note + hb;
       return;
     }
 
@@ -2661,7 +2736,8 @@ function chargerSuivi() {
     h += '</tbody></table></div>';
     h += '<div style="font-size:10px;color:var(--txt3);margin-top:6px"><span style="color:var(--grn);font-weight:700">\u2713</span> valid\u00e9e dans la semaine \u00b7 <span style="color:#d4691e;font-weight:700">\u2713\u1D57</span> saisie a posteriori \u00b7 <span style=\"color:#2e6da4;font-weight:700\">+N</span> Extra Time (bonus)</div>';
     h += '<div style="display:flex;gap:6px;margin-top:8px"><button onclick="basculerVueSuivi()" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:7px;font-size:11px">\uD83D\uDCCA Vue r\u00e9sum\u00e9e</button><button onclick="chargerSuivi()" class="btn btn-ghost" style="flex:1;margin-bottom:0;padding:7px;font-size:11px">\u21BB Actualiser</button></div>';
-    el.innerHTML = note + h;
+    el.innerHTML = alertesHtml + note + h;
+  });
   });
 }
 
